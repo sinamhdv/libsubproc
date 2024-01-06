@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <termios.h>
 #include <sys/ioctl.h>
 #include "subproc/subproc.h"
 
@@ -45,6 +46,11 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 	return true;
 }
 
+static void assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd_assignments[3])
+{
+	
+}
+
 static int create_pty_master(void)
 {
 	int pty_master;
@@ -61,6 +67,15 @@ static int create_pty_master(void)
 fail:
 	close(pty_master);
 	return -1;
+}
+
+static bool set_tty_options(int pty_slave)
+{
+	struct termios tty_opts;
+	if (tcgetattr(pty_slave, &tty_opts) == -1) return false;
+	cfmakeraw(&tty_opts);
+	if (tcsetattr(pty_slave, TCSANOW, &tty_opts) == -1) return false;
+	return true;
 }
 
 static int create_pty_slave(int pty_master)
@@ -111,10 +126,10 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	if (!create_pipes(fd_status, pipes))
 		goto fail;
 
-	pid_t pid = fork();
-	if (pid == -1)
+	pid_t child_pid = fork();
+	if (child_pid == -1)
 		goto fail;
-	if (pid == 0)	// child
+	if (child_pid == 0)	// child
 	{
 		int pty_slave = -1;
 		if (use_pty)
@@ -130,7 +145,8 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	}
 	else	// parent
 	{
-
+		int fd_assignments[3];
+		assign_fds(fd_status, pipes, pty_master, fd_assignments);
 	}
 
 	return sp;
