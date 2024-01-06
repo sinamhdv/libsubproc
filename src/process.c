@@ -46,17 +46,23 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 	return true;
 }
 
-static void assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd_assignments[3])
+static bool assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd_assignments[3])
 {
 	for (int i = 0; i < 3; i++)
 	{
 		if (fd_status[i] == SPIO_PIPE)
-			fd_assignments[i] = pipes[i][(i == 0 ? 1 : 0)];
+		{
+			int idx = (i == 0 ? 1 : 0);
+			fd_assignments[i] = pipes[i][idx];
+			if (close(pipes[i][1 - idx]) == -1)
+				return false;
+		}
 		else if (fd_status[i] == SPIO_PTY)
 			fd_assignments[i] = pty_master;
 		else
 			fd_assignments[i] = fd_status[i];
 	}
+	return true;
 }
 
 static int create_pty_master(void)
@@ -154,12 +160,23 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	else	// parent
 	{
 		int fd_assignments[3];
-		assign_fds(fd_status, pipes, pty_master, fd_assignments);
+		if (!assign_fds(fd_status, pipes, pty_master, fd_assignments))
+		{
+			close(pty_master);
+			for (int i = 0; i < 3; i++)
+			{
+				if (fd_status[i] == SPIO_PIPE)
+				{
+					close(pipes[i][0]);
+					close(pipes[i][1]);
+				}
+			}
+			goto fail;
+		}
 		sp->fd_in = fd_assignments[0];
 		sp->fd_out = fd_assignments[1];
 		sp->fd_err = fd_assignments[2];
 		sp->pid = child_pid;
-		
 	}
 
 	return sp;
