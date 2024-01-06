@@ -37,7 +37,8 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 		}
 		else
 		{
-			if (dup2(fd_status[i], i) == -1)
+			if (dup2(fd_status[i], i) == -1 ||
+				close(fd_status[i], i) == -1)
 				return false;
 		}
 	}
