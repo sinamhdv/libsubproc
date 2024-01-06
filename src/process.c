@@ -94,7 +94,6 @@ static bool set_tty_options(int pty_slave)
 
 static int create_pty_slave(int pty_master)
 {
-	int pty_slave;
 	char slave_name[256];
 	if (ptsname_r(pty_master, slave_name, sizeof(slave_name)))
 		return -1;
