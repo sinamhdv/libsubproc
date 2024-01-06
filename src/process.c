@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <termios.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include "subproc/subproc.h"
 
@@ -170,6 +171,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 					close(pipes[i][1]);
 				}
 			}
+			kill(child_pid, SIGKILL);
 			goto fail;
 		}
 		sp->fd_in = fd_assignments[0];
