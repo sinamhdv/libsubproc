@@ -14,6 +14,8 @@ OBJS=$(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 TESTBIN=$(BINDIR)/run_tests
 DYNAMIC_BIN=$(BINDIR)/libsubproc.so
 
+$(shell mkdir -p $(BINDIR) $(OBJDIR))	# create build directories
+
 all: $(DYNAMIC_BIN)
 
 $(DYNAMIC_BIN): $(OBJS)
