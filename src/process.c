@@ -52,17 +52,7 @@ static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2])
 		}
 		else if (fd_status[i] == SPIO_PTY)
 		{
-			char slave_name[256];
-			if (ptsname_r(used_fds[i][0], slave_name, sizeof(slave_name)))
-				return false;
-			int pty_slave = open(slave_name, O_RDWR | O_CLOEXEC);
-			if (pty_slave == -1) return false;
-			set_tty_options(pty_slave);
-			if (setsid() == -1)
-				return false;
-			if (ioctl(pty_slave, TIOCSCTTY, 0) == -1)
-				return false;
-			dup2()
+			
 		}
 		else
 		{
@@ -75,7 +65,7 @@ static int create_pty_master(void)
 {
 	int pty_master;
 	if ((pty_master = posix_openpt(O_RDWR | O_NOCTTY)) == -1)
-		return false;
+		return -1;
 	if (grantpt(pty_master) == -1)
 		goto fail;
 	if (unlockpt(pty_master) == -1)
@@ -86,6 +76,27 @@ static int create_pty_master(void)
 	return pty_master;
 fail:
 	close(pty_master);
+	return -1;
+}
+
+static int create_pty_slave(int pty_master)
+{
+	int pty_slave;
+	char slave_name[256];
+	if (ptsname_r(pty_master, slave_name, sizeof(slave_name)))
+		return -1;
+	int pty_slave = open(slave_name, O_RDWR | O_CLOEXEC);
+	if (pty_slave == -1) return -1;
+	if (!set_tty_options(pty_slave))
+		goto fail;
+	if (setsid() == -1)
+		goto fail;
+	if (ioctl(pty_slave, TIOCSCTTY, 0) == -1)
+		goto fail;
+
+	return pty_slave;
+fail:
+	close(pty_slave);
 	return -1;
 }
 
