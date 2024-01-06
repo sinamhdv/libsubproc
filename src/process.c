@@ -30,7 +30,6 @@ static bool create_used_fds(int fd_status[3], int used_fds[3][2], int pty_master
 		else
 			used_fds[i][0] = used_fds[i][1] = fd_status[i];
 	}
-
 	return true;
 }
 
@@ -39,9 +38,10 @@ static bool create_used_fds(int fd_status[3], int used_fds[3][2], int pty_master
  * 
  * @param fd_status what is the type of each fd (SPIO_PIPE, SPIO_PTY, or an fd)
  * @param used_fds the fds we should duplicate into standard io fds
+ * @param pty_slave the slave side of the pty, if used
  * @return true on success, false on failure
  */
-static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2])
+static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2], int pty_slave)
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -52,7 +52,6 @@ static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2])
 		}
 		else if (fd_status[i] == SPIO_PTY)
 		{
-			
 		}
 		else
 		{
@@ -116,11 +115,15 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	bool use_pty = (fd_status[0] == SPIO_PTY ||
 					fd_status[1] == SPIO_PTY ||
 					fd_status[2] == SPIO_PTY);
-	int pty[2] = {-1, -1};	// master/slave
+	int pty_master = -1;
 
-	if (use_pty && !create_pty(pty))
-		goto fail;
-	if (!create_used_fds(fd_status, used_fds))
+	if (use_pty)
+	{
+		pty_master = create_pty_master();
+		if (pty_master == -1)
+			goto fail;
+	}
+	if (!create_used_fds(fd_status, used_fds, pty_master))
 		goto fail;
 
 	pid_t pid = fork();
@@ -128,7 +131,14 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		goto fail;
 	if (pid == 0)	// child
 	{
-		if (!duplicate_used_fds(fd_status, used_fds))
+		int pty_slave = -1;
+		if (use_pty)
+		{
+			pty_slave = create_pty_slave(pty_master);
+			if (pty_slave == -1)
+				exit(1);
+		}
+		if (!duplicate_used_fds(fd_status, used_fds, pty_slave))
 			exit(1);
 		if (execve(executable, argv, envp) == -1)
 			exit(1);
