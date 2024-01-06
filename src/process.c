@@ -48,7 +48,15 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 
 static void assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd_assignments[3])
 {
-	
+	for (int i = 0; i < 3; i++)
+	{
+		if (fd_status[i] == SPIO_PIPE)
+			fd_assignments[i] = pipes[i][(i == 0 ? 1 : 0)];
+		else if (fd_status[i] == SPIO_PTY)
+			fd_assignments[i] = pty_master;
+		else
+			fd_assignments[i] = fd_status[i];
+	}
 }
 
 static int create_pty_master(void)
@@ -147,6 +155,11 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	{
 		int fd_assignments[3];
 		assign_fds(fd_status, pipes, pty_master, fd_assignments);
+		sp->fd_in = fd_assignments[0];
+		sp->fd_out = fd_assignments[1];
+		sp->fd_err = fd_assignments[2];
+		sp->pid = child_pid;
+		
 	}
 
 	return sp;
