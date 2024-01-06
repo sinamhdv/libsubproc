@@ -1,7 +1,3 @@
 #include <stdio.h>
-#include "subproc.h"
+#include "subproc/subproc.h"
 
-void sp_open(void)
-{
-	puts("Hello World");
-}
