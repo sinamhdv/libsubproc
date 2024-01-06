@@ -8,56 +8,40 @@
 #include <sys/ioctl.h>
 #include "subproc/subproc.h"
 
-/**
- * @brief Creates the pipes and ptys to be used by the child process
- * 
- * @param fd_status an array showing what we should do for each standard fd
- * @param used_fds the fd array to fill for stdin/stdout/stderr and read/write end
- * @param pty_master the master side of the created pty, if used
- * @return true on success, false on error
- */
-static bool create_used_fds(int fd_status[3], int used_fds[3][2], int pty_master)
-{
-	for (int i = 0; i < 3; i++)
-	{
-		if (fd_status[i] == SPIO_PTY)
-			used_fds[i][0] = used_fds[i][1] = pty_master;
-		else if (fd_status[i] == SPIO_PIPE)
-		{
-			if (pipe2(used_fds[i], O_CLOEXEC) == -1)
-				return false;
-		}
-		else
-			used_fds[i][0] = used_fds[i][1] = fd_status[i];
-	}
-	return true;
-}
-
-/**
- * @brief Duplicate used fds as child standard io fds
- * 
- * @param fd_status what is the type of each fd (SPIO_PIPE, SPIO_PTY, or an fd)
- * @param used_fds the fds we should duplicate into standard io fds
- * @param pty_slave the slave side of the pty, if used
- * @return true on success, false on failure
- */
-static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2], int pty_slave)
+static bool create_pipes(int fd_status[3], int pipes[3][2])
 {
 	for (int i = 0; i < 3; i++)
 	{
 		if (fd_status[i] == SPIO_PIPE)
 		{
-			if (dup2(used_fds[i][(i == 0 ? 0 : 1)], i) == -1)
+			if (pipe2(pipes[i], O_CLOEXEC) == -1)
+				return false;
+		}
+	}
+	return true;
+}
+
+static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (fd_status[i] == SPIO_PIPE)
+		{
+			if (dup2(pipes[i][(i == 0 ? 0 : 1)], i) == -1)
 				return false;
 		}
 		else if (fd_status[i] == SPIO_PTY)
 		{
+			if (dup2(pty_slave, i) == -1)
+				return false;
 		}
 		else
 		{
-			
+			if (dup2(fd_status[i], i) == -1)
+				return false;
 		}
 	}
+	return true;
 }
 
 static int create_pty_master(void)
@@ -111,7 +95,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	memset(sp, 0, sizeof(subproc));
 
 	int fd_status[3] = {fd_in, fd_out, fd_err};
-	int used_fds[3][2];
+	int pipes[3][2];
 	bool use_pty = (fd_status[0] == SPIO_PTY ||
 					fd_status[1] == SPIO_PTY ||
 					fd_status[2] == SPIO_PTY);
@@ -123,7 +107,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		if (pty_master == -1)
 			goto fail;
 	}
-	if (!create_used_fds(fd_status, used_fds, pty_master))
+	if (!create_pipes(fd_status, pipes))
 		goto fail;
 
 	pid_t pid = fork();
@@ -138,7 +122,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 			if (pty_slave == -1)
 				exit(1);
 		}
-		if (!duplicate_used_fds(fd_status, used_fds, pty_slave))
+		if (!duplicate_fds(fd_status, pipes, pty_slave))
 			exit(1);
 		if (execve(executable, argv, envp) == -1)
 			exit(1);
