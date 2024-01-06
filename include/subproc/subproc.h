@@ -3,6 +3,9 @@
 
 #include <sys/types.h>
 
+#define SPIO_PTY -1
+#define SPIO_PIPE -2
+
 typedef struct {
 	int fd_in;
 	int fd_out;
