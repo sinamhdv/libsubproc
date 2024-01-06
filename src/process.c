@@ -11,7 +11,7 @@
  * @brief Creates the pipes and ptys to be used by the child process
  * 
  * @param fd_status an array showing what we should do for each standard fd
- * @param used_fds the fd array to fill for stdin/stdout/stderr and parent/child
+ * @param used_fds the fd array to fill for stdin/stdout/stderr and read/write end
  * @return true on success, false on error
  */
 static bool create_used_fds(int fd_status[3], int used_fds[3][2])
@@ -56,6 +56,32 @@ static bool create_used_fds(int fd_status[3], int used_fds[3][2])
 }
 
 /**
+ * @brief Duplicate used fds as child standard io fds
+ * 
+ * @param fd_status what is the type of each fd (SPIO_PIPE, SPIO_PTY, or an fd)
+ * @param used_fds the fds we should duplicate into standard io fds
+ * @return true on success, false on failure
+ */
+static bool duplicate_used_fds(int fd_status[3], int used_fds[3][2])
+{
+	for (int i = 0; i < 3; i++)
+	{
+		if (fd_status[i] == SPIO_PIPE)
+		{
+
+		}
+		else if (fd_status[i] == SPIO_PTY)
+		{
+
+		}
+		else
+		{
+			
+		}
+	}
+}
+
+/**
  * @brief Opens a new subprocess
  * 
  * @param executable the executable file's name
@@ -87,7 +113,10 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		goto fail;
 	if (pid == 0)	// child
 	{
-
+		if (!duplicate_used_fds(fd_status, used_fds))
+			exit(1);
+		if (execve(executable, argv, envp) == -1)
+			exit(1);
 	}
 	else	// parent
 	{
