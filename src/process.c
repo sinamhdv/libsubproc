@@ -217,6 +217,14 @@ int sp_wait(subproc *sp, bool blocking)
 	return 1;
 }
 
+int sp_close(subproc *sp)
+{
+	if (sp->fd_in != -1)
+		return close(sp->fd_in);
+	errno = EBADF;
+	return -1;
+}
+
 void sp_free(subproc *sp)
 {
 	if (sp->is_alive)

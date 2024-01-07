@@ -1,3 +1,4 @@
 - [ ] valgrind memtest
 - [ ] fd leak test
 - [ ] handle redirection of stderr to stdout
+- [ ] (maybe?) add a SIGCHLD handler to automatically detect child terminations and set sp->is_alive to false there. (requires keeping a hash-table/list of all created subproc structs to be found by their pid so that we can set their is_alive to false).

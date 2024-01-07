@@ -36,6 +36,8 @@ int sp_kill(subproc *sp);
 // TEMP DOC: returns 1 if terminated, -1 on error, 0 if child not terminated in non-blocking calls
 int sp_wait(subproc *proc, bool blocking);
 
+int sp_close(subproc *sp);
+
 void sp_free(subproc *sp);
 
 #endif	// HEADER_SUBPROC_H
