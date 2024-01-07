@@ -8,6 +8,7 @@
 #include <termios.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include "subproc/subproc.h"
 
 static bool create_pipes(int fd_status[3], int pipes[3][2])
@@ -206,7 +207,14 @@ int sp_kill(subproc *sp)
 
 int sp_wait(subproc *proc, bool blocking)
 {
-	// TODO
+	int status;
+	int ret_val = waitpid(proc->pid, &status, (blocking ? 0 : WNOHANG));
+	if (ret_val == -1 || ret_val == 0)
+		return ret_val;
+	if (WIFEXITED(status))
+		sp->returncode = WEXITSTATUS(status);
+	sp->is_alive = false;
+	return 1;
 }
 
 void sp_free(subproc *sp)
