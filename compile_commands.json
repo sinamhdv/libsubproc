@@ -1,0 +1,34 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Iinclude",
+      "-g",
+      "-DDEBUG",
+      "-c",
+      "-o",
+      "obj/process.o",
+      "src/process.c"
+    ],
+    "directory": "/home/sinamhdv/Documents/coding/libsubproc",
+    "file": "/home/sinamhdv/Documents/coding/libsubproc/src/process.c",
+    "output": "/home/sinamhdv/Documents/coding/libsubproc/obj/process.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-Iinclude",
+      "-g",
+      "-DDEBUG",
+      "-o",
+      "bin/run_tests",
+      "test/test.c"
+    ],
+    "directory": "/home/sinamhdv/Documents/coding/libsubproc",
+    "file": "/home/sinamhdv/Documents/coding/libsubproc/test/test.c",
+    "output": "/home/sinamhdv/Documents/coding/libsubproc/bin/run_tests"
+  }
+]
