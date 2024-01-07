@@ -205,10 +205,10 @@ int sp_kill(subproc *sp)
 	return ret_val;
 }
 
-int sp_wait(subproc *proc, bool blocking)
+int sp_wait(subproc *sp, bool blocking)
 {
 	int status;
-	int ret_val = waitpid(proc->pid, &status, (blocking ? 0 : WNOHANG));
+	int ret_val = waitpid(sp->pid, &status, (blocking ? 0 : WNOHANG));
 	if (ret_val == -1 || ret_val == 0)
 		return ret_val;
 	if (WIFEXITED(status))
