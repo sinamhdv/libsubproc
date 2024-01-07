@@ -2,6 +2,7 @@
 #define HEADER_SUBPROC_H
 
 #include <sys/types.h>
+#include <stdbool.h>
 
 #define SPIO_PTY -1
 #define SPIO_PIPE -2
