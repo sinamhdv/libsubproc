@@ -178,10 +178,46 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		sp->fd_out = fd_assignments[1];
 		sp->fd_err = fd_assignments[2];
 		sp->pid = child_pid;
+		sp->is_alive = true;
 	}
 
 	return sp;
 fail:
 	free(sp);
 	return NULL;
+}
+
+int sp_send_signal(subproc *sp, int sig)
+{
+	if (!sp->is_alive)
+	{
+		errno = ESRCH;
+		return -1;
+	}
+	return kill(sp->pid, sig);
+}
+
+int sp_kill(subproc *sp)
+{
+	int ret_val = sp_send_signal(sp, SIGKILL);
+	sp->is_alive = false;
+	return ret_val;
+}
+
+int sp_wait(subproc *proc, bool blocking)
+{
+	// TODO
+}
+
+void sp_free(subproc *sp)
+{
+	if (sp->is_alive)
+	{
+		sp_kill(sp);
+		sp_wait(sp, true);
+	}
+	if (sp->fd_in != -1) close(sp->fd_in);
+	if (sp->fd_out != -1) close(sp->fd_out);
+	if (sp->fd_err != -1) close(sp->fd_err);
+	free(sp);
 }

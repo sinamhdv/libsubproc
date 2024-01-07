@@ -1,2 +1,3 @@
 - [ ] valgrind memtest
 - [ ] fd leak test
+- [ ] handle redirection of stderr to stdout

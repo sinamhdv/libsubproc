@@ -12,6 +12,7 @@ typedef struct
 	int fd_out;
 	int fd_err;
 	int returncode;
+	bool is_alive;
 	pid_t pid;
 } subproc;
 
