@@ -220,7 +220,12 @@ int sp_wait(subproc *sp, bool blocking)
 int sp_close(subproc *sp)
 {
 	if (sp->fd_in != -1)
-		return close(sp->fd_in);
+	{
+		int ret_val = close(sp->fd_in);
+		if (ret_val == -1) return -1;
+		sp->fd_in = -1;
+		return ret_val;
+	}
 	errno = EBADF;
 	return -1;
 }

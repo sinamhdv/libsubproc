@@ -35,7 +35,7 @@ int sp_send_signal(subproc *sp, int sig);
 int sp_kill(subproc *sp);
 
 // TEMP DOC: returns 1 if terminated, -1 on error, 0 if child not terminated in non-blocking calls
-int sp_wait(subproc *proc, bool blocking);
+int sp_wait(subproc *sp, bool blocking);
 
 int sp_close(subproc *sp);
 
