@@ -1,14 +1,3 @@
-#define _GNU_SOURCE
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <stdbool.h>
-#include <termios.h>
-#include <signal.h>
-#include <sys/ioctl.h>
-#include <sys/wait.h>
 #include "subproc/subproc.h"
 
 static bool create_pipes(int fd_status[3], int pipes[3][2])

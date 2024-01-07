@@ -1,8 +1,18 @@
 #ifndef HEADER_SUBPROC_H
 #define HEADER_SUBPROC_H
 
-#include <sys/types.h>
+#define _GNU_SOURCE
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <stdbool.h>
+#include <termios.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 #define SPIO_PTY -1
 #define SPIO_PIPE -2
