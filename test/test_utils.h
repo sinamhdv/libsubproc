@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include "subproc/subproc.h"
 
 #define log(x) (printf(#x " = %d\n", (x)))
 
