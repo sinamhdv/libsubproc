@@ -1,4 +1,6 @@
 #include "subproc/subproc.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 static bool create_pipes(int fd_status[3], int pipes[3][2])
 {
@@ -27,6 +29,18 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 			if (dup2(pty_slave, i) == -1)
 				return false;
 		}
+		else if (fd_status[i] == SPIO_STDOUT)
+		{
+			if (dup2(1, 2) == -1)
+				return false;
+		}
+		else if (fd_status[i] == SPIO_DEVNULL)
+		{
+			int dev_null_fd = open("/dev/null", O_CLOEXEC | (i == 0 ? O_RDONLY : O_WRONLY));
+			if (dev_null_fd == -1) return false;
+			if (dup2(dev_null_fd, i) == -1)
+				return false;
+		}
 		else
 		{
 			if (dup2(fd_status[i], i) == -1 ||
@@ -50,7 +64,11 @@ static bool assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd
 		}
 		else if (fd_status[i] == SPIO_PTY)
 			fd_assignments[i] = pty_master;
-		else
+		else if (fd_status[i] == SPIO_STDOUT)
+			fd_assignments[i] = fd_assignments[1];
+		else if (fd_status[i] == SPIO_DEVNULL)
+			fd_assignments[i] = -1;
+		else	// custom fd
 			fd_assignments[i] = fd_status[i];
 	}
 	return true;
@@ -105,7 +123,12 @@ fail:
 
 subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err)
 {
-	// allocate the struct
+	if (fd_in == SPIO_STDOUT || fd_out == SPIO_STDOUT)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
 	subproc *sp = malloc(sizeof(subproc));
 	if (sp == NULL)
 	{

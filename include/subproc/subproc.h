@@ -14,10 +14,10 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-#define SPIO_PTY -1
-#define SPIO_PIPE -2
-#define SPIO_DEVNULL -3
-#define SPIO_STDOUT -4
+#define SPIO_PTY -1		// open a pty
+#define SPIO_PIPE -2	// open a pipe
+#define SPIO_DEVNULL -3	// redirect to /dev/null
+#define SPIO_STDOUT -4	// redirecting stderr to stdout
 
 typedef struct
 {

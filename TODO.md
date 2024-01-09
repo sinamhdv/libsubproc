@@ -5,3 +5,4 @@
 - [ ] add docs for functions
 - [ ] add SPIO_DEVNULL to fd modes
 - [ ] add select/poll support to fds (maybe in IO module?)
+- [ ] NOTE: PIDs are not reused until waited on => subproc->is_alive is not necessary
