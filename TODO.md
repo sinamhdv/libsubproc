@@ -1,8 +1,7 @@
 - [ ] valgrind memtest
-- [ ] fd leak test
-- [ ] handle redirection of stderr to stdout
+- [X] fd leak test
+- [ ] handle redirection of stderr to stdout (SPIO_STDOUT for fd_err only)
 - [ ] (maybe?) add a SIGCHLD handler to automatically detect child terminations and set sp->is_alive to false there. (requires keeping a hash-table/list of all created subproc structs to be found by their pid so that we can set their is_alive to false).
 - [ ] add docs for functions
 - [ ] add SPIO_DEVNULL to fd modes
-- [ ] add a way to redirect stderr to stdout in sp_open()
 - [ ] add select/poll support to fds (maybe in IO module?)

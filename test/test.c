@@ -77,6 +77,8 @@ void test_redirection(void)
 	assert(read(rev_sp->fd_out, output_buf, sizeof(output_buf)) == 4);
 	assert(strcmp(output_buf, "dcba") == 0);
 	sp_free(rev_sp);
+
+	dump_fds(getpid());
 }
 
 int main(void)

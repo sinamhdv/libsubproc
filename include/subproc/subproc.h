@@ -16,6 +16,8 @@
 
 #define SPIO_PTY -1
 #define SPIO_PIPE -2
+#define SPIO_DEVNULL -3
+#define SPIO_STDOUT -4
 
 typedef struct
 {
