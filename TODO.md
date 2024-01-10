@@ -1,8 +1,10 @@
 - [ ] valgrind memtest
 - [X] fd leak test
-- [ ] handle redirection of stderr to stdout (SPIO_STDOUT for fd_err only)
+- [X] handle redirection of stderr to stdout (SPIO_STDOUT for fd_err only)
 - [ ] (maybe?) add a SIGCHLD handler to automatically detect child terminations and set sp->is_alive to false there. (requires keeping a hash-table/list of all created subproc structs to be found by their pid so that we can set their is_alive to false).
 - [ ] add docs for functions
-- [ ] add SPIO_DEVNULL to fd modes
+- [X] add SPIO_DEVNULL to fd modes
 - [ ] add select/poll support to fds (maybe in IO module?)
-- [ ] NOTE: PIDs are not reused until waited on => subproc->is_alive is not necessary
+- [ ] NOTE: PIDs are not reused until waited on => subproc->is_alive is not necessary => it is necessary in sp_free() because sp_free() might be called after sp_wait() when the PID is reused. But, it can be renamed and shouldn't be part of the public interface. (maybe cange it to _waited_on or something).
+- [ ] add a module for error handling containing the latest errno faced in libsubproc functions and a global `char *` containing the name of the function we faced an error in. Then, we need an `sp_strerror` function to print this name and the `strerror` of the library errno.
+- [ ] test SPIO_STDOUT and SPIO_DEVNULL
