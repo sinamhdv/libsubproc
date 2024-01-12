@@ -1,5 +1,7 @@
 #include "subproc/subproc.h"
 #include "test_utils.h"
+#include <asm-generic/errno-base.h>
+#include <assert.h>
 #include <unistd.h>
 
 void test_signals(void)
@@ -10,17 +12,15 @@ void test_signals(void)
 	subproc *sp = sp_open(rev_argv[0], rev_argv, NULL, SPIO_PIPE, SPIO_PTY, SPIO_PTY);
 	assert(sp != NULL);
 	assert(sp->fd_out == sp->fd_err);
-	assert(sp->is_alive == true);
+	assert(sp->_waited == false);
+	assert(sp->returncode == 0);
 	assert(sp->pid > 0);
 
 	log(sp->fd_in);
 	log(sp->fd_out);
 	log(sp->fd_err);
-	log(sp->is_alive);
-	log(sp->returncode);
 	log(sp->pid);
 
-	pid_t child_pid = sp->pid;
 	pid_t my_pid = getpid();
 	log(my_pid);
 
@@ -28,22 +28,25 @@ void test_signals(void)
 	dump_fds(sp->pid);	// should only have 0/1/2
 
 	assert(sp_wait(sp, WNOHANG) == 0);
+	assert(sp->_waited == false);
 
 	assert(sp_send_signal(sp, SIGSTOP) == 0);
 	assert(sp_wait(sp, WNOHANG) == 0);
+	assert(sp->_waited == false);
 	int wstatus;
 	assert(waitpid(sp->pid, &wstatus, WUNTRACED) != -1);
 	assert(WIFSTOPPED(wstatus));	// test if the child stopped
 
 	assert(sp_send_signal(sp, SIGCONT) == 0);
 	assert(sp_wait(sp, WNOHANG) == 0);
+	assert(sp->_waited == false);
 	assert(waitpid(sp->pid, &wstatus, WCONTINUED) != -1);
 	assert(!WIFSTOPPED(wstatus));	// test if the child continued
 
 	assert(sp_kill(sp) == 0);
+	assert(sp->_waited == false);
 	assert(sp_wait(sp, 0) == 1);
-	assert(kill(child_pid, 0) == -1);	// test if the child terminated
-	assert(sp->is_alive == false);
+	assert(sp->_waited == true);
 	sp_free(sp);
 
 	dump_fds(my_pid);	// should be only 0/1/2 now
@@ -70,7 +73,9 @@ void test_redirection(void)
 	assert(write(cat_sp->fd_in, "abcd", 4) == 4);
 	assert(sp_close(cat_sp) == 0);
 	assert(sp_wait(cat_sp, 0) == 1);
-	log(cat_sp->returncode);
+	assert(sp_kill(cat_sp) == -1);
+	assert(errno == ESRCH);
+	assert(cat_sp->returncode == 0);
 	sp_free(cat_sp);
 
 	char output_buf[10] = {};

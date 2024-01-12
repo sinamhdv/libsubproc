@@ -191,7 +191,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		sp->fd_out = fd_assignments[1];
 		sp->fd_err = fd_assignments[2];
 		sp->pid = child_pid;
-		sp->is_alive = true;
+		sp->_waited = false;
 	}
 
 	return sp;
@@ -202,7 +202,7 @@ fail:
 
 int sp_send_signal(subproc *sp, int sig)
 {
-	if (!sp->is_alive)
+	if (sp->_waited)
 	{
 		errno = ESRCH;
 		return -1;
@@ -213,7 +213,6 @@ int sp_send_signal(subproc *sp, int sig)
 int sp_kill(subproc *sp)
 {
 	int ret_val = sp_send_signal(sp, SIGKILL);
-	sp->is_alive = false;
 	return ret_val;
 }
 
@@ -225,7 +224,7 @@ int sp_wait(subproc *sp, int options)
 		return ret_val;
 	if (WIFEXITED(status))
 		sp->returncode = WEXITSTATUS(status);
-	sp->is_alive = false;
+	sp->_waited = true;
 	return 1;
 }
 
@@ -244,7 +243,7 @@ int sp_close(subproc *sp)
 
 void sp_free(subproc *sp)
 {
-	if (sp->is_alive)
+	if (!sp->_waited)
 	{
 		sp_kill(sp);
 		sp_wait(sp, 0);

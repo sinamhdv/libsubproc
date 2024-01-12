@@ -25,8 +25,8 @@ typedef struct
 	int fd_out;
 	int fd_err;
 	int returncode;
-	bool is_alive;
 	pid_t pid;
+	bool _waited;	// XXX: this should not be changed by users
 } subproc;
 
 /**
