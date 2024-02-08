@@ -24,8 +24,8 @@ void test_signals(void)
 	pid_t my_pid = getpid();
 	log(my_pid);
 
-	dump_fds(my_pid);	// should only have 0/1/2 and fd_in/fd_out/fd_err of the child
-	dump_fds(sp->pid);	// should only have 0/1/2
+	dump_fds(my_pid);	// EXPECTED: 0/1/2, one pipe, and one pty
+	dump_fds(sp->pid);	// EXPECTED: 0/1/2 only: 0 to pipe, 1 & 2 to pty
 
 	assert(sp_wait(sp, WNOHANG) == 0);
 	assert(sp->_waited == false);
@@ -49,7 +49,7 @@ void test_signals(void)
 	assert(sp->_waited == true);
 	sp_free(sp);
 
-	dump_fds(my_pid);	// should be only 0/1/2 now
+	dump_fds(my_pid);	// EXPECTED: 0/1/2 only
 }
 
 void test_redirection(void)
@@ -64,9 +64,9 @@ void test_redirection(void)
 	assert(cat_sp != NULL);
 	assert(rev_sp != NULL);
 
-	dump_fds(getpid());
-	dump_fds(cat_sp->pid);
-	dump_fds(rev_sp->pid);
+	dump_fds(getpid());	// EXPECTED: 0/1/2 and 5 pipes
+	dump_fds(cat_sp->pid);	// EXPECTED: 0/1/2 only
+	dump_fds(rev_sp->pid);	// EXPECTED: 0/1/2 only
 
 	assert(rev_sp->fd_in == cat_sp->fd_out);
 	
@@ -83,12 +83,36 @@ void test_redirection(void)
 	assert(strcmp(output_buf, "dcba") == 0);
 	sp_free(rev_sp);
 
-	dump_fds(getpid());
+	dump_fds(getpid());	// EXPECTED: 0/1/2 only
+}
+
+void test_spio_options(void)
+{
+	puts("\ntest_spio_options():");
+	puts("===========================");
+
+	// SPIO_DEV_NULL and SPIO_PARENT	
+	char *argv1[] = {"/usr/bin/cat", "/nonexistent", "-", NULL};
+	subproc *sp = sp_open(argv1[0], argv1, NULL, SPIO_PIPE, SPIO_PARENT, SPIO_DEVNULL);
+	dump_fds(sp->pid);	// EXPECTED: 0/1/2 only: 0 to pipe, 1 to output terminal, 2 to /dev/null
+	sp_free(sp);
+
+	// SPIO_STDOUT
+	char *argv2[] = {"/usr/bin/cat", "/nonexistent", NULL};
+	sp = sp_open(argv2[0], argv2, NULL, SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT);
+	assert(sp->fd_err == sp->fd_out);
+	char buf[128];
+	size_t read_cnt = read(sp->fd_out, buf, sizeof(buf) - 1);
+	assert(read_cnt > 0);
+	buf[read_cnt] = 0;
+	assert(strstr(buf, "No such file or directory") != NULL);
+	sp_free(sp);
 }
 
 int main(void)
 {
 	test_signals();
 	test_redirection();
+	test_spio_options();
 	return 0;
 }
