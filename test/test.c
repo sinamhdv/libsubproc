@@ -111,10 +111,24 @@ void test_spio_options(void)
 	sp_free(sp);
 }
 
+void test_errors(void)
+{
+	puts("\ntest_errors():");
+	puts("===========================");
+
+	char *argv[] = {"/soidjfs", NULL};
+	subproc *sp = sp_open(argv[0], argv, NULL, SPIO_PIPE, SPIO_PIPE, SPIO_STDOUT);
+	log(sp_wait(sp, 0));
+	log(sp_wait(sp, 0));
+	sp_perror("msg1");
+	sp_free(sp);
+}
+
 int main(void)
 {
 	test_signals();
 	test_redirection();
 	test_spio_options();
+	test_errors();
 	return 0;
 }
