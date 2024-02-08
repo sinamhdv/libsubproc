@@ -1,3 +1,4 @@
+#include "subproc/errors.h"
 #include "subproc/subproc.h"
 #include "test_utils.h"
 
@@ -116,12 +117,31 @@ void test_errors(void)
 	puts("\ntest_errors():");
 	puts("===========================");
 
-	char *argv[] = {"/soidjfs", NULL};
-	subproc *sp = sp_open(argv[0], argv, NULL, SPIO_PIPE, SPIO_PIPE, SPIO_STDOUT);
-	log(sp_wait(sp, 0));
-	log(sp_wait(sp, 0));
+	char *argv[] = {"/nonexistent", NULL};
+	subproc *sp = sp_open(argv[0], argv, NULL, SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT);
+	assert(sp_wait(sp, 0) > 0);
+	
+	assert(sp_wait(sp, 0) == -1);
+	assert(sp_errno == ECHILD);
+	assert(strcmp(sp_errfunc, "waitpid") == 0);
 	sp_perror("msg1");
+
+	assert(sp_kill(sp) == -1);
+	assert(sp_errno == ESRCH);
+	assert(strcmp(sp_errfunc, "sp_send_signal") == 0);
+	sp_perror("msg2");
+
+	assert(sp_close(sp) == -1);
+	assert(sp_errno == EBADF);
+	assert(strcmp(sp_errfunc, "sp_close") == 0);
+	sp_perror("msg3");
+
 	sp_free(sp);
+
+	assert(sp_open(argv[0], argv, NULL, SPIO_STDOUT, SPIO_PIPE, SPIO_PIPE) == NULL);
+	assert(sp_errno == EINVAL);
+	assert(strcmp(sp_errfunc, "sp_open") == 0);
+	sp_perror("msg4");
 }
 
 int main(void)
