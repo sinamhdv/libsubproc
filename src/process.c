@@ -69,7 +69,7 @@ static bool assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd
 		else if (fd_status[i] == SPIO_DEVNULL)
 			fd_assignments[i] = -1;
 		else if (fd_status[i] == SPIO_PARENT)
-			fd_assignments[i] = i;
+			fd_assignments[i] = -1;
 		else	// custom fd
 			fd_assignments[i] = fd_status[i];
 	}
