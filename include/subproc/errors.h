@@ -4,4 +4,6 @@
 extern int sp_errno;	// last library errno we faced in sp functions
 extern char *sp_errfunc;	// name of the library function that caused this errno
 
+void sp_perror(char *msg);
+
 #endif	// HEADER_SP_ERRORS_H
