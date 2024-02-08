@@ -11,3 +11,4 @@
 - [ ] add `wstatus` argument to `sp_wait`
 - [ ] add the option of providing user-allocated struct to `sp_open`
 - [ ] (maybe?) set `fd_assignment` for a custom fd to -1 to prevent closing it in `sp_free`
+- [ ] capturing return-code of programs terminating with signals (e.g. SIGSEGV) in `sp_wait`?
