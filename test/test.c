@@ -98,9 +98,14 @@ void test_spio_options(void)
 	char *argv2[] = {"/usr/bin/cat", "/nonexistent", NULL};
 	sp = sp_open(argv2[0], argv2, NULL, SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT);
 	assert(sp->fd_err == sp->fd_out);
-	char buf[128];
-	size_t read_cnt = read(sp->fd_out, buf, sizeof(buf) - 1);
-	assert(read_cnt > 0);
+	char buf[128] = {};
+	size_t read_cnt = 0;
+	while (read_cnt < sizeof(buf) - 1 && strchr(buf, '\n') == NULL)
+	{
+		size_t cur_read_cnt = read(sp->fd_out, buf + read_cnt, sizeof(buf) - 1 - read_cnt);
+		assert(cur_read_cnt > 0);
+		read_cnt += cur_read_cnt;
+	}
 	buf[read_cnt] = 0;
 	assert(strstr(buf, "No such file or directory") != NULL);
 	sp_free(sp);
