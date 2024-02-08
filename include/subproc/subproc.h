@@ -18,6 +18,7 @@
 #define SPIO_PIPE -2	// open a pipe
 #define SPIO_DEVNULL -3	// redirect to /dev/null
 #define SPIO_STDOUT -4	// redirecting stderr to stdout
+#define SPIO_PARENT	-5	// leave this fd the same as parent
 
 typedef struct
 {

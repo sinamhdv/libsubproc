@@ -41,7 +41,7 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 			if (dup2(dev_null_fd, i) == -1)
 				return false;
 		}
-		else
+		else if (fd_status[i] != SPIO_PARENT)	// custom fd
 		{
 			if (dup2(fd_status[i], i) == -1 ||
 				close(fd_status[i]) == -1)
@@ -68,6 +68,8 @@ static bool assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd
 			fd_assignments[i] = fd_assignments[1];
 		else if (fd_status[i] == SPIO_DEVNULL)
 			fd_assignments[i] = -1;
+		else if (fd_status[i] == SPIO_PARENT)
+			fd_assignments[i] = i;
 		else	// custom fd
 			fd_assignments[i] = fd_status[i];
 	}
