@@ -1,6 +1,4 @@
 #include "subproc/subproc.h"
-#include <fcntl.h>
-#include <unistd.h>
 
 static bool create_pipes(int fd_status[3], int pipes[3][2])
 {

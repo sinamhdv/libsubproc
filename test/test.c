@@ -1,8 +1,5 @@
 #include "subproc/subproc.h"
 #include "test_utils.h"
-#include <asm-generic/errno-base.h>
-#include <assert.h>
-#include <unistd.h>
 
 void test_signals(void)
 {
