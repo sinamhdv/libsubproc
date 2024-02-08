@@ -1,5 +1,10 @@
 #include "subproc/subproc.h"
 
+#define seterror(errfunc, action) { \
+			sp_errno = errno; \
+			sp_errfunc = (errfunc); \
+			action; }
+
 static bool create_pipes(int fd_status[3], int pipes[3][2])
 {
 	for (int i = 0; i < 3; i++)
