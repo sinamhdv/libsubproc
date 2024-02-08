@@ -185,6 +185,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 				}
 			}
 			kill(child_pid, SIGKILL);
+			waitpid(child_pid, NULL, 0);
 			goto fail;
 		}
 		sp->fd_in = fd_assignments[0];
