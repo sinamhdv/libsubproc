@@ -6,7 +6,7 @@ BINDIR=bin
 OBJDIR=obj
 TESTDIR=test
 
-CFLAGS=-Wall -I$(INCLUDEDIR) -g -DDEBUG
+CFLAGS=-Wall -I$(INCLUDEDIR) -g -DDEBUG -fPIC
 
 SRCS=$(wildcard $(SRCDIR)/*.c)
 OBJS=$(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
