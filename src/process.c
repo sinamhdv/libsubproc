@@ -12,7 +12,7 @@ static bool create_pipes(int fd_status[3], int pipes[3][2])
 		if (fd_status[i] == SPIO_PIPE)
 		{
 			if (pipe2(pipes[i], O_CLOEXEC) == -1)
-				return false;
+				seterror("pipe2", return false);
 		}
 	}
 	return true;
@@ -46,8 +46,9 @@ static bool duplicate_fds(int fd_status[3], int pipes[3][2], int pty_slave)
 		}
 		else if (fd_status[i] != SPIO_PARENT)	// custom fd
 		{
-			if (dup2(fd_status[i], i) == -1 ||
-				close(fd_status[i]) == -1)
+			if (dup2(fd_status[i], i) == -1)
+				return false;
+			if (close(fd_status[i]) == -1)
 				return false;
 		}
 	}
@@ -63,7 +64,7 @@ static bool assign_fds(int fd_status[3], int pipes[3][2], int pty_master, int fd
 			int idx = (i == 0 ? 1 : 0);
 			fd_assignments[i] = pipes[i][idx];
 			if (close(pipes[i][1 - idx]) == -1)
-				return false;
+				seterror("close", return false);
 		}
 		else if (fd_status[i] == SPIO_PTY)
 			fd_assignments[i] = pty_master;
@@ -83,13 +84,13 @@ static int create_pty_master(void)
 {
 	int pty_master;
 	if ((pty_master = posix_openpt(O_RDWR | O_NOCTTY)) == -1)
-		return -1;
+		seterror("posix_openpt", return -1);
 	if (grantpt(pty_master) == -1)
-		goto fail;
+		seterror("grantpt", goto fail);
 	if (unlockpt(pty_master) == -1)
-		goto fail;
+		seterror("unlockpt", goto fail);
 	if (fcntl(pty_master, F_SETFD, FD_CLOEXEC) == -1)
-		goto fail;
+		seterror("fcntl", goto fail);
 	
 	return pty_master;
 fail:
@@ -131,15 +132,12 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 	if (fd_in == SPIO_STDOUT || fd_out == SPIO_STDOUT)
 	{
 		errno = EINVAL;
-		return NULL;
+		seterror("sp_open", return NULL);
 	}
 
 	subproc *sp = malloc(sizeof(subproc));
 	if (sp == NULL)
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
+		seterror("malloc", return NULL);
 	memset(sp, 0, sizeof(subproc));
 
 	int fd_status[3] = {fd_in, fd_out, fd_err};
@@ -160,7 +158,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 
 	pid_t child_pid = fork();
 	if (child_pid == -1)
-		goto fail;
+		seterror("fork", goto fail);
 	if (child_pid == 0)	// child
 	{
 		int pty_slave = -1;
@@ -211,9 +209,12 @@ int sp_send_signal(subproc *sp, int sig)
 	if (sp->_waited)
 	{
 		errno = ESRCH;
-		return -1;
+		seterror("sp_send_signal", return -1);
 	}
-	return kill(sp->pid, sig);
+	int ret_val = kill(sp->pid, sig);
+	if (ret_val == -1)
+		seterror("kill", return -1);
+	return ret_val;
 }
 
 int sp_kill(subproc *sp)
@@ -226,8 +227,10 @@ int sp_wait(subproc *sp, int options)
 {
 	int status;
 	int ret_val = waitpid(sp->pid, &status, options);
-	if (ret_val == -1 || ret_val == 0)
-		return ret_val;
+	if (ret_val == -1)
+		seterror("waitpid", return -1);
+	if (ret_val == 0)
+		return 0;
 	if (WIFEXITED(status))
 		sp->returncode = WEXITSTATUS(status);
 	sp->_waited = true;
@@ -239,12 +242,12 @@ int sp_close(subproc *sp)
 	if (sp->fd_in != -1)
 	{
 		int ret_val = close(sp->fd_in);
-		if (ret_val == -1) return -1;
+		if (ret_val == -1) seterror("close", return -1);
 		sp->fd_in = -1;
 		return ret_val;
 	}
 	errno = EBADF;
-	return -1;
+	seterror("sp_close", return -1);
 }
 
 void sp_free(subproc *sp)
