@@ -34,15 +34,16 @@ typedef struct
 /**
  * @brief Opens a new subprocess
  * 
+ * @param sp pointer to the subproc struct to use
  * @param executable the executable file's name
  * @param argv
  * @param envp
  * @param fd_in stdin of the child: either SPIO_PIPE, SPIO_PTY, or a file descriptor
  * @param fd_out stdout of the child
  * @param fd_err stderr of the child
- * @return a pointer to the subproc object for the created child or NULL on error
+ * @return 0 on success, -1 on error (and sets sp_errno).
  */
-subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err);
+int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err);
 
 int sp_send_signal(subproc *sp, int sig);
 

@@ -127,17 +127,14 @@ fail:
 	return -1;
 }
 
-subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err)
+int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err)
 {
 	if (fd_in == SPIO_STDOUT || fd_out == SPIO_STDOUT)
 	{
 		errno = EINVAL;
-		seterror("sp_open", return NULL);
+		seterror("sp_open", return -1);
 	}
 
-	subproc *sp = malloc(sizeof(subproc));
-	if (sp == NULL)
-		seterror("malloc", return NULL);
 	memset(sp, 0, sizeof(subproc));
 
 	int fd_status[3] = {fd_in, fd_out, fd_err};
@@ -196,10 +193,9 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 		sp->_waited = false;
 	}
 
-	return sp;
+	return 0;
 fail:
-	free(sp);
-	return NULL;
+	return -1;
 }
 
 int sp_send_signal(subproc *sp, int sig)
@@ -258,5 +254,4 @@ void sp_free(subproc *sp)
 	for (int i = 0; i < 3; i++)
 		if (sp->fds[i] != -1)
 			close(sp->fds[i]);
-	free(sp);
 }
