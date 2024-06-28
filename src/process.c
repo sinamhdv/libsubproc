@@ -191,9 +191,7 @@ subproc *sp_open(char *executable, char *argv[], char *envp[], int fd_in, int fd
 			waitpid(child_pid, NULL, 0);
 			goto fail;
 		}
-		sp->fd_in = fd_assignments[0];
-		sp->fd_out = fd_assignments[1];
-		sp->fd_err = fd_assignments[2];
+		memcpy(sp->fds, fd_assignments, sizeof(sp->fds));
 		sp->pid = child_pid;
 		sp->_waited = false;
 	}
@@ -239,11 +237,11 @@ int sp_wait(subproc *sp, int options)
 
 int sp_close(subproc *sp)
 {
-	if (sp->fd_in != -1)
+	if (sp->fds[0] != -1)
 	{
-		int ret_val = close(sp->fd_in);
+		int ret_val = close(sp->fds[0]);
 		if (ret_val == -1) seterror("close", return -1);
-		sp->fd_in = -1;
+		sp->fds[0] = -1;
 		return ret_val;
 	}
 	errno = EBADF;
@@ -257,8 +255,8 @@ void sp_free(subproc *sp)
 		sp_kill(sp);
 		sp_wait(sp, 0);
 	}
-	if (sp->fd_in != -1) close(sp->fd_in);
-	if (sp->fd_out != -1) close(sp->fd_out);
-	if (sp->fd_err != -1) close(sp->fd_err);
+	for (int i = 0; i < 3; i++)
+		if (sp->fds[i] != -1)
+			close(sp->fds[i]);
 	free(sp);
 }

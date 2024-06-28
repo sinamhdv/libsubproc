@@ -25,9 +25,7 @@
 
 typedef struct
 {
-	int fd_in;
-	int fd_out;
-	int fd_err;
+	int fds[3];
 	int returncode;
 	pid_t pid;
 	bool _waited;	// XXX: this should not be changed by users
