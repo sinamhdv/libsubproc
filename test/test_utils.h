@@ -17,4 +17,10 @@ void dump_fds(pid_t pid)
 	system(cmd);
 }
 
+// show a warning message with colors
+void show_warning(char *msg)
+{
+	printf("\033[33m%s\033[0m\n", msg);
+}
+
 #endif	// HEADER_TEST_UTILS
