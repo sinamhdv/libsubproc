@@ -6,4 +6,4 @@ extern char *sp_errfunc;	// name of the library function that caused this errno
 
 void sp_perror(char *msg);
 
-#endif	// HEADER_SP_ERRORS_H
+#endif	// SP_HEADER_ERRORS_H

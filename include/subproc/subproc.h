@@ -1,5 +1,5 @@
-#ifndef HEADER_SUBPROC_H
-#define HEADER_SUBPROC_H
+#ifndef SP_HEADER_SUBPROC_H
+#define SP_HEADER_SUBPROC_H
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -55,4 +55,4 @@ int sp_close(subproc *sp);
 
 void sp_free(subproc *sp);
 
-#endif	// HEADER_SUBPROC_H
+#endif	// SP_HEADER_SUBPROC_H
