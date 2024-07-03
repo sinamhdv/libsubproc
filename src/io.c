@@ -52,7 +52,13 @@ int sp_sends(subproc *sp, char *str)
 
 int sp_flush(subproc *sp)
 {
-
+	struct sp_io_buffer *buf = &sp->buf[0];
+	if (buf->start == NULL || buf->ptr == buf->start) return 0;
+	size_t data_size = (size_t)(buf->ptr) - (size_t)(buf->start);
+	if (!send_all_unbuffered(sp->fds[0], buf->start, data_size))
+		return -1;
+	buf->ptr = buf->start;
+	return 0;
 }
 
 int sp_recvc(subproc *sp, bool from_strerr)
