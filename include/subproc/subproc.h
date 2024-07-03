@@ -16,6 +16,7 @@
 #include <sys/types.h>
 
 #include "subproc/errors.h"
+#include "subproc/io.h"
 
 #define SPIO_PTY -1		// open a pty
 #define SPIO_PIPE -2	// open a pipe
@@ -23,9 +24,10 @@
 #define SPIO_STDOUT -4	// redirecting stderr to stdout
 #define SPIO_PARENT	-5	// leave this fd the same as parent
 
-typedef struct
+typedef struct subproc
 {
 	int fds[3];
+	struct sp_io_buffer buf[3];
 	int returncode;
 	pid_t pid;
 	bool _waited;	// XXX: this should not be changed by users
