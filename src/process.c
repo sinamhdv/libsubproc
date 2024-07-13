@@ -122,21 +122,40 @@ fail:
 	return -1;
 }
 
-int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err)
+int sp_open(
+	subproc *sp,
+	char *executable, char *argv[], char *envp[],
+	int fd_value[3],
+	size_t bufsize[3])
 {
-	if (fd_in == SPIO_STDOUT || fd_out == SPIO_STDOUT)
+	if (fd_value[0] == SPIO_STDOUT || fd_value[1] == SPIO_STDOUT)
 	{
 		errno = EINVAL;
 		seterror("sp_open", return -1);
 	}
 
 	memset(sp, 0, sizeof(subproc));
+	for (int i = 0; i < 3; i++)
+	{
+		if (bufsize[i] != 0)
+		{
+			sp->buf[i].start = malloc(bufsize[i]);
+			if (sp->buf[i].start == NULL)
+			{
+				for (int j = 0; j < i; j++)
+					free(sp->buf[j].start);
+				errno = ENOMEM;
+				seterror("malloc", goto fail);
+			}
+			sp->buf[i].end = sp->buf[i].start + bufsize[i];
+			sp->buf[i].ptr = (i == 0 ? sp->buf[i].start : sp->buf[i].end);
+		}
+	}
 
-	int fd_status[3] = {fd_in, fd_out, fd_err};
 	int pipes[3][2];
-	bool use_pty = (fd_status[0] == SPIO_PTY ||
-					fd_status[1] == SPIO_PTY ||
-					fd_status[2] == SPIO_PTY);
+	bool use_pty = (fd_value[0] == SPIO_PTY ||
+					fd_value[1] == SPIO_PTY ||
+					fd_value[2] == SPIO_PTY);
 	int pty_master = -1;
 
 	if (use_pty)
@@ -145,7 +164,7 @@ int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in
 		if (pty_master == -1)
 			goto fail;
 	}
-	if (!create_pipes(fd_status, pipes))
+	if (!create_pipes(fd_value, pipes))
 		goto fail;
 
 	pid_t child_pid = fork();
@@ -160,7 +179,7 @@ int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in
 			if (pty_slave == -1)
 				exit(1);
 		}
-		if (!duplicate_fds(fd_status, pipes, pty_slave))
+		if (!duplicate_fds(fd_value, pipes, pty_slave))
 			exit(1);
 		if (execve(executable, argv, envp) == -1)
 			exit(1);
@@ -168,12 +187,12 @@ int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in
 	else	// parent
 	{
 		int fd_assignments[3];
-		if (!assign_fds(fd_status, pipes, pty_master, fd_assignments))
+		if (!assign_fds(fd_value, pipes, pty_master, fd_assignments))
 		{
 			close(pty_master);
 			for (int i = 0; i < 3; i++)
 			{
-				if (fd_status[i] == SPIO_PIPE)
+				if (fd_value[i] == SPIO_PIPE)
 				{
 					close(pipes[i][0]);
 					close(pipes[i][1]);
@@ -233,6 +252,8 @@ int sp_close(subproc *sp)
 		int ret_val = close(sp->fds[0]);
 		if (ret_val == -1) seterror("close", return -1);
 		sp->fds[0] = -1;
+		if (sp->buf[0].start != NULL)
+			free(sp->buf[0].start);
 		return ret_val;
 	}
 	errno = EBADF;
@@ -247,6 +268,10 @@ void sp_free(subproc *sp)
 		sp_wait(sp, 0);
 	}
 	for (int i = 0; i < 3; i++)
+	{
 		if (sp->fds[i] != -1)
 			close(sp->fds[i]);
+		if (sp->buf[i].start != NULL)
+			free(sp->buf[i].start);
+	}
 }

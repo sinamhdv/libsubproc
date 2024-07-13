@@ -7,7 +7,9 @@ void test_signals(void)
 	puts("===========================");
 	char *rev_argv[] = {"/usr/bin/rev", NULL};
 	subproc *sp = malloc(sizeof(subproc));
-	assert(sp_open(sp, rev_argv[0], rev_argv, NULL, SPIO_PIPE, SPIO_PTY, SPIO_PTY) == 0);
+	assert(sp_open(sp, rev_argv[0], rev_argv, NULL,
+		(int[3]){SPIO_PIPE, SPIO_PTY, SPIO_PTY},
+		(size_t[3]){0, 0, 0}) == 0);
 	assert(sp != NULL);
 	assert(sp->fds[1] == sp->fds[2]);
 	assert(sp->_waited == false);
@@ -51,7 +53,7 @@ void test_signals(void)
 	free(sp);
 
 	dump_fds(my_pid);
-	show_warning("EXPECTED: 0/1/2 only");
+	show_warning("EXPECTED: 0/1/2 only (all to output terminal)");
 }
 
 void test_redirection(void)
@@ -62,15 +64,19 @@ void test_redirection(void)
 	char *cat_argv[] = {"/usr/bin/cat", NULL};
 	char *rev_argv[] = {"/usr/bin/rev", NULL};
 	subproc cat_sp, rev_sp;
-	assert(sp_open(&cat_sp, cat_argv[0], cat_argv, NULL, SPIO_PIPE, SPIO_PIPE, SPIO_PIPE) == 0);
-	assert(sp_open(&rev_sp, rev_argv[0], rev_argv, NULL, cat_sp.fds[1], SPIO_PIPE, SPIO_PIPE) == 0);
+	assert(sp_open(&cat_sp, cat_argv[0], cat_argv, NULL,
+		(int[3]){SPIO_PIPE, SPIO_PIPE, SPIO_PIPE},
+		(size_t[3]){0, 0, 0}) == 0);
+	assert(sp_open(&rev_sp, rev_argv[0], rev_argv, NULL,
+		(int[3]){cat_sp.fds[1], SPIO_PIPE, SPIO_PIPE},
+		(size_t[3]){0, 0, 0}) == 0);
 
 	dump_fds(getpid());
 	show_warning("EXPECTED: 0/1/2 and 5 pipes");
 	dump_fds(cat_sp.pid);
-	show_warning("EXPECTED: 0/1/2 only");
+	show_warning("EXPECTED: 0/1/2 only (all to pipes)");
 	dump_fds(rev_sp.pid);
-	show_warning("EXPECTED: 0/1/2 only");
+	show_warning("EXPECTED: 0/1/2 only (all to pipes)");
 
 	assert(rev_sp.fds[0] == cat_sp.fds[1]);
 	
@@ -88,7 +94,7 @@ void test_redirection(void)
 	sp_free(&rev_sp);
 
 	dump_fds(getpid());
-	show_warning("EXPECTED: 0/1/2 only");
+	show_warning("EXPECTED: 0/1/2 only (all to output terminal)");
 }
 
 void test_spio_options(void)
@@ -99,14 +105,18 @@ void test_spio_options(void)
 	// SPIO_DEV_NULL and SPIO_PARENT	
 	char *argv1[] = {"/usr/bin/cat", "/nonexistent", "-", NULL};
 	subproc sp;
-	assert(sp_open(&sp, argv1[0], argv1, NULL, SPIO_PIPE, SPIO_PARENT, SPIO_DEVNULL) == 0);
+	assert(sp_open(&sp, argv1[0], argv1, NULL,
+		(int[3]){SPIO_PIPE, SPIO_PARENT, SPIO_DEVNULL},
+		(size_t[3]){0, 0, 0}) == 0);
 	dump_fds(sp.pid);
 	show_warning("EXPECTED: 0/1/2 only: 0 to pipe, 1 to output terminal, 2 to /dev/null");
 	sp_free(&sp);
 
 	// SPIO_STDOUT
 	char *argv2[] = {"/usr/bin/cat", "/nonexistent", NULL};
-	assert(sp_open(&sp, argv2[0], argv2, NULL, SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT) == 0);
+	assert(sp_open(&sp, argv2[0], argv2, NULL,
+		(int[3]){SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT},
+		(size_t[3]){0, 0, 0}) == 0);
 	assert(sp.fds[2] == sp.fds[1]);
 	char buf[128] = {};
 	size_t read_cnt = 0;
@@ -128,7 +138,9 @@ void test_errors(void)
 
 	char *argv[] = {"/nonexistent", NULL};
 	subproc sp;
-	assert(sp_open(&sp, argv[0], argv, NULL, SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT) == 0);
+	assert(sp_open(&sp, argv[0], argv, NULL,
+		(int[3]){SPIO_DEVNULL, SPIO_PIPE, SPIO_STDOUT},
+		(size_t[3]){0, 0, 0}) == 0);
 	assert(sp_wait(&sp, 0) > 0);
 	
 	assert(sp_wait(&sp, 0) == -1);
@@ -148,10 +160,19 @@ void test_errors(void)
 
 	sp_free(&sp);
 
-	assert(sp_open(&sp, argv[0], argv, NULL, SPIO_STDOUT, SPIO_PIPE, SPIO_PIPE) == -1);
+	assert(sp_open(&sp, argv[0], argv, NULL,
+		(int[3]){SPIO_STDOUT, SPIO_PIPE, SPIO_PIPE},
+		(size_t[3]){0, 0, 0}) == -1);
 	assert(sp_errno == EINVAL);
 	assert(strcmp(sp_errfunc, "sp_open") == 0);
 	sp_perror("msg4");
+}
+
+void test_io(void)
+{
+	// subproc sp;
+	// char *argv[] = {"/usr/bin/env", "python3", NULL};
+	// assert(sp_open(&sp, argv[0], argv, NULL, SPIO_PTY, SPIO_PTY, SPIO_PTY))
 }
 
 int main(void)
@@ -160,5 +181,6 @@ int main(void)
 	test_redirection();
 	test_spio_options();
 	test_errors();
+	test_io();
 	return 0;
 }

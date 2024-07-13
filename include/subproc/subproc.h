@@ -41,12 +41,11 @@ typedef struct subproc
  * @param executable the executable file's name
  * @param argv
  * @param envp
- * @param fd_in stdin of the child: either SPIO_PIPE, SPIO_PTY, or a file descriptor
- * @param fd_out stdout of the child
- * @param fd_err stderr of the child
+ * @param fd_values values (or special SPIO_... flags) for fds of the subprocess
+ * @param bufsize buffer size for each fd (or 0 for unbuffered)
  * @return 0 on success, -1 on error (and sets sp_errno).
  */
-int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_in, int fd_out, int fd_err);
+int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_values[3], size_t bufsize[3]);
 
 int sp_send_signal(subproc *sp, int sig);
 
