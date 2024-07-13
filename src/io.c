@@ -98,28 +98,36 @@ int sp_recvc(subproc *sp, bool from_strerr)
 	return *buf->ptr++;
 }
 
-ssize_t sp_recvn(subproc *sp, char *data, size_t n, bool from_stderr)
+static ssize_t internal_buffered_recv_string(
+	struct sp_io_buffer *buf,
+	int fd,
+	char *data,
+	size_t size,
+	bool has_delim,
+	char delim)
 {
-	struct sp_io_buffer *buf = &sp->buf[from_stderr ? 2 : 1];
-	int fd = sp->fds[from_stderr ? 2 : 1];
-	if (sp_flush(sp) == -1)
-		return -1;
-	if (buf->start == NULL)	// unbuffered
-	{
-		ssize_t ret = read(fd, data, n);
-		if (ret < 0) seterror("read", return -1);
-		return ret;
-	}
 	size_t read_size = 0;
 	bool eof_reached = false;
-	while (read_size < n)
+	while (read_size < size)
 	{
 		size_t full_buf_size = (size_t)buf->end - (size_t)buf->start;
 		size_t buf_content_size = (size_t)buf->end - (size_t)buf->ptr;
-		if (n - read_size <= buf_content_size)	// the data left in buffer is enough
+		char *found_ptr;
+		if (has_delim && (found_ptr = memchr(buf->ptr, delim, buf_content_size)) != NULL)	// delim found
 		{
-			memcpy(data + read_size, buf->ptr, n - read_size);
-			buf->ptr += n - read_size;
+			size_t size_to_delim = ((size_t)found_ptr - (size_t)buf->ptr) + 1;
+			if (size - read_size >= size_to_delim)
+			{
+				memcpy(data + read_size, buf->ptr, size_to_delim);
+				buf->ptr = found_ptr + 1;
+				read_size += size_to_delim;
+				return read_size;
+			}
+		}
+		if (size - read_size <= buf_content_size)	// the data left in buffer is enough
+		{
+			memcpy(data + read_size, buf->ptr, size - read_size);
+			buf->ptr += size - read_size;
 			return read_size;
 		}
 		memcpy(data + read_size, buf->ptr, buf_content_size);
@@ -136,9 +144,43 @@ ssize_t sp_recvn(subproc *sp, char *data, size_t n, bool from_stderr)
 	return read_size;
 }
 
+ssize_t sp_recvn(subproc *sp, char *data, size_t size, bool from_stderr)
+{
+	struct sp_io_buffer *buf = &sp->buf[from_stderr ? 2 : 1];
+	int fd = sp->fds[from_stderr ? 2 : 1];
+	if (sp_flush(sp) == -1)
+		return -1;
+	if (buf->start == NULL)	// unbuffered
+	{
+		ssize_t ret = read(fd, data, size);
+		if (ret < 0) seterror("read", return -1);
+		return ret;
+	}
+	return internal_buffered_recv_string(buf, fd, data, size, false, 0);
+}
+
 ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
 {
-
+	struct sp_io_buffer *buf = &sp->buf[from_stderr ? 2 : 1];
+	int fd = sp->fds[from_stderr ? 2 : 1];
+	if (sp_flush(sp) == -1)
+		return -1;
+	if (buf->start == NULL)	// unbuffered
+	{
+		unsigned char c = delim == 0 ? 1 : 0;
+		size_t read_size = 0;
+		while (c != delim && read_size < size)
+		{
+			size_t result = read(fd, &c, 1);
+			if (result == (size_t)-1)
+				seterror("read", return -1);
+			if (result == 0)
+				break;
+			data[read_size++] = c;
+		}
+		return read_size;
+	}
+	return internal_buffered_recv_string(buf, fd, data, size, true, delim);
 }
 
 ssize_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
