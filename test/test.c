@@ -168,11 +168,38 @@ void test_errors(void)
 	sp_perror("msg4");
 }
 
-void test_io(void)
+void test_buffered_io(void)
 {
-	// subproc sp;
-	// char *argv[] = {"/usr/bin/env", "python3", NULL};
-	// assert(sp_open(&sp, argv[0], argv, NULL, SPIO_PTY, SPIO_PTY, SPIO_PTY))
+	puts("\ntest_buffered_io():");
+	puts("===========================");
+
+	subproc sp;
+	char *argv[] = {"/usr/bin/env", "python3", NULL};
+	assert(sp_open(&sp, argv[0], argv, NULL,
+		(int[3]){SPIO_PTY, SPIO_PTY, SPIO_STDOUT},
+		(size_t[3]){20, 20, 20}) == 0);
+		// (size_t[3]){0, 0, 0}) == 0);
+	char buf[1024] = {};
+	ssize_t ret;
+	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, ">>> ", false);
+	assert(ret > 0);
+	assert(ret == strlen(buf));
+	assert(strcmp(buf + strlen(buf) - 4, ">>> ") == 0);
+	assert(strncmp(buf, "Python", strlen("Python")) == 0);
+	
+	assert(sp_sends(&sp, "print('hello world')\n") == 0);
+	ret = sp_recvline(&sp, buf, sizeof(buf) - 1, false);
+	assert(ret > 0);
+	buf[ret] = 0;
+	assert(ret == strlen(buf));
+	puts(buf);
+	assert(strcmp(buf, "hello world\n") == 0);
+
+}
+
+void test_unbuffered_io(void)
+{
+	// TODO
 }
 
 int main(void)
@@ -181,6 +208,7 @@ int main(void)
 	test_redirection();
 	test_spio_options();
 	test_errors();
-	test_io();
+	test_buffered_io();
+	test_unbuffered_io();
 	return 0;
 }

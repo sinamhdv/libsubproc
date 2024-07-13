@@ -107,11 +107,9 @@ static ssize_t internal_buffered_recv_array(
 	char *delim)
 {
 	size_t read_size = 0;
-	bool eof_reached = false;
 	size_t delim_len = has_delim ? strlen(delim) : 0;
 	while (read_size < size)
 	{
-		size_t full_buf_size = (size_t)buf->end - (size_t)buf->start;
 		size_t buf_content_size = (size_t)buf->end - (size_t)buf->ptr;
 		char *found_ptr;
 		if (has_delim && (found_ptr = memmem(buf->ptr, buf_content_size, delim, delim_len)) != NULL)	// delim found
@@ -134,13 +132,11 @@ static ssize_t internal_buffered_recv_array(
 		memcpy(data + read_size, buf->ptr, buf_content_size);
 		read_size += buf_content_size;
 		buf->ptr = buf->end;
-		if (eof_reached)
-			return read_size;
 		ssize_t refill_result = refill_recv_buffer(buf, fd);
 		if (refill_result == -1)
 			return -1;
-		if (refill_result < full_buf_size)
-			eof_reached = true;
+		else if (refill_result == 0)
+			break;
 	}
 	return read_size;
 }
