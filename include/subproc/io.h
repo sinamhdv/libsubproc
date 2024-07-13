@@ -3,6 +3,16 @@
 
 #include "subproc/subproc.h"
 
+/*
+sp_io_buffer for subprocess stdin:
+
+	[buf->start]...[buffered data not yet sent to subprocess]...[buf->ptr]...[free buffer space]...[buf->end]
+
+sp_io_buffer for subprocess stdout/stderr:
+
+	[buf->start]...[free buffer space]...[buf->ptr]...[buffered read data not yet passed to user]...[buf->end]
+*/
+
 struct sp_io_buffer
 {
 	char *start;
