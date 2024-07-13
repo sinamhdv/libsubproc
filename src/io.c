@@ -61,6 +61,22 @@ int sp_flush(subproc *sp)
 	return 0;
 }
 
+static ssize_t refill_recv_buffer(struct sp_io_buffer *buf, int fd)
+{
+	size_t bufsize = (size_t)buf->end - (size_t)buf->start;
+	size_t read_size = read(fd, buf->start, bufsize);
+	if (read_size == (size_t)-1)
+		seterror("read", return -1);
+	buf->ptr = buf->start;
+	if (read_size < bufsize)
+	{
+		size_t diff_size = bufsize - read_size;
+		memmove(buf->start + diff_size, buf->start, read_size);
+		buf->ptr = buf->start + diff_size;
+	}
+	return read_size;
+}
+
 int sp_recvc(subproc *sp, bool from_strerr)
 {
 	struct sp_io_buffer *buf = &sp->buf[from_strerr ? 2 : 1];
@@ -71,29 +87,53 @@ int sp_recvc(subproc *sp, bool from_strerr)
 	if (buf->start == NULL)	// unbuffered
 	{
 		if (read(fd, &c, 1) <= 0)
-			return -1;
+			seterror("read", return -1);
 		return c;
 	}
-	if (buf->ptr != buf->end)
+	if (buf->ptr != buf->end)	// already have data in buffer
 		return *buf->ptr++;
-	size_t bufsize = (size_t)buf->end - (size_t)buf->start;
-	size_t read_size = read(fd, buf->start, bufsize);
-	if (read_size == bufsize)
-		buf->ptr = buf->start;
-	else
-	{
-		if ((ssize_t)read_size <= -1)
-			return -1;
-		size_t diff_size = bufsize - read_size;
-		memmove(buf->start + diff_size, buf->start, read_size);
-		buf->ptr = buf->start + diff_size;
-	}
+	ssize_t result = refill_recv_buffer(buf, fd);
+	if (result == -1)
+		return -1;
 	return *buf->ptr++;
 }
 
 ssize_t sp_recvn(subproc *sp, char *data, size_t n, bool from_stderr)
 {
-
+	struct sp_io_buffer *buf = &sp->buf[from_stderr ? 2 : 1];
+	int fd = sp->fds[from_stderr ? 2 : 1];
+	if (sp_flush(sp) == -1)
+		return -1;
+	if (buf->start == NULL)	// unbuffered
+	{
+		ssize_t ret = read(fd, data, n);
+		if (ret < 0) seterror("read", return -1);
+		return ret;
+	}
+	size_t read_size = 0;
+	bool eof_reached = false;
+	while (read_size < n)
+	{
+		size_t full_buf_size = (size_t)buf->end - (size_t)buf->start;
+		size_t buf_content_size = (size_t)buf->end - (size_t)buf->ptr;
+		if (n - read_size <= buf_content_size)	// the data left in buffer is enough
+		{
+			memcpy(data + read_size, buf->ptr, n - read_size);
+			buf->ptr += n - read_size;
+			return read_size;
+		}
+		memcpy(data + read_size, buf->ptr, buf_content_size);
+		read_size += buf_content_size;
+		buf->ptr = buf->end;
+		if (eof_reached)
+			return read_size;
+		ssize_t refill_result = refill_recv_buffer(buf, fd);
+		if (refill_result == -1)
+			return -1;
+		if (refill_result < full_buf_size)
+			eof_reached = true;
+	}
+	return read_size;
 }
 
 ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
