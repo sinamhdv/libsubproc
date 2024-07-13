@@ -197,6 +197,7 @@ int sp_interact(subproc *sp)
 				if (poll_fds[i].revents & POLL_IN)	// data available to read
 				{
 					char read_buf[1024];
+					// TODO: prevent infinite blocking in the read syscall below after "import os" and "import sys" in python shell
 					ssize_t read_size = read(poll_fds[i].fd, read_buf, sizeof(read_buf));
 					if (read_size == -1) seterror("read", return -1);
 					if (poll_fds[i].fd == 0)	// read from user => send to subprocess
