@@ -118,7 +118,7 @@ static ssize_t internal_buffered_recv_array(
 			if (size - read_size >= size_to_delim)
 			{
 				memcpy(data + read_size, buf->ptr, size_to_delim);
-				buf->ptr = found_ptr + 1;
+				buf->ptr += size_to_delim;
 				read_size += size_to_delim;
 				return read_size;
 			}

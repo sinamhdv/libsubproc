@@ -181,18 +181,21 @@ void test_buffered_io(void)
 		// (size_t[3]){0, 0, 0}) == 0);
 	char buf[1024] = {};
 	ssize_t ret;
+	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, "th", false);
+	assert(ret == 4);
+	buf[ret] = 0;
+	assert(strcmp(buf, "Pyth") == 0);
+	assert(strncmp(sp.buf[1].ptr, "on ", 3) == 0);
+	assert(strncmp(sp.buf[1].start, "Python ", 7) == 0);
 	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, ">>> ", false);
-	assert(ret > 0);
 	assert(ret == strlen(buf));
 	assert(strcmp(buf + strlen(buf) - 4, ">>> ") == 0);
-	assert(strncmp(buf, "Python", strlen("Python")) == 0);
 	
 	assert(sp_sends(&sp, "print('hello world')\n") == 0);
 	ret = sp_recvline(&sp, buf, sizeof(buf) - 1, false);
 	assert(ret > 0);
 	buf[ret] = 0;
 	assert(ret == strlen(buf));
-	puts(buf);
 	assert(strcmp(buf, "hello world\n") == 0);
 
 }
