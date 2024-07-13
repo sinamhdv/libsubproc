@@ -98,7 +98,7 @@ int sp_recvc(subproc *sp, bool from_strerr)
 	return *buf->ptr++;
 }
 
-static ssize_t internal_buffered_recv_string(
+static ssize_t internal_buffered_recv_array(
 	struct sp_io_buffer *buf,
 	int fd,
 	char *data,
@@ -156,7 +156,7 @@ ssize_t sp_recvn(subproc *sp, char *data, size_t size, bool from_stderr)
 		if (ret < 0) seterror("read", return -1);
 		return ret;
 	}
-	return internal_buffered_recv_string(buf, fd, data, size, false, 0);
+	return internal_buffered_recv_array(buf, fd, data, size, false, 0);
 }
 
 ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
@@ -180,7 +180,7 @@ ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from
 		}
 		return read_size;
 	}
-	return internal_buffered_recv_string(buf, fd, data, size, true, delim);
+	return internal_buffered_recv_array(buf, fd, data, size, true, delim);
 }
 
 ssize_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
