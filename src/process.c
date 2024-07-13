@@ -272,6 +272,9 @@ void sp_free(subproc *sp)
 		if (sp->fds[i] != -1)
 			close(sp->fds[i]);
 		if (sp->buf[i].start != NULL)
+		{
 			free(sp->buf[i].start);
+			sp->buf[i].start = NULL;
+		}
 	}
 }
