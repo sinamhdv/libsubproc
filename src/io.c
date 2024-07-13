@@ -188,6 +188,33 @@ ssize_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
 	return sp_recvuntil(sp, data, size, '\n', from_stderr);
 }
 
+ssize_t sp_recvn_s(subproc *sp, char *data, size_t size, bool from_stderr)
+{
+	if (size == 0) return 0;
+	ssize_t result = sp_recvn(sp, data, size - 1, from_stderr);
+	if (result == -1) return result;
+	data[result] = 0;
+	return result;
+}
+
+ssize_t sp_recvuntil_s(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
+{
+	if (size == 0) return 0;
+	ssize_t result = sp_recvuntil(sp, data, size - 1, delim, from_stderr);
+	if (result == -1) return result;
+	data[result] = 0;
+	return result;
+}
+
+ssize_t sp_recvline_s(subproc *sp, char *data, size_t size, bool from_stderr)
+{
+	if (size == 0) return 0;
+	ssize_t result = sp_recvline(sp, data, size - 1, from_stderr);
+	if (result == -1) return result;
+	data[result] = 0;
+	return result;
+}
+
 int sp_interact(subproc *sp)
 {
 
