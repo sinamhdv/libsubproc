@@ -63,20 +63,45 @@ int sp_flush(subproc *sp)
 
 int sp_recvc(subproc *sp, bool from_strerr)
 {
-
+	struct sp_io_buffer *buf = &sp->buf[from_strerr ? 2 : 1];
+	int fd = sp->fds[from_strerr ? 2 : 1];
+	if (sp_flush(sp) == -1)
+		return -1;
+	unsigned char c;
+	if (buf->start == NULL)	// unbuffered
+	{
+		if (read(fd, &c, 1) <= 0)
+			return -1;
+		return c;
+	}
+	if (buf->ptr != buf->end)
+		return *buf->ptr++;
+	size_t bufsize = (size_t)buf->end - (size_t)buf->start;
+	size_t read_size = read(fd, buf->start, bufsize);
+	if (read_size == bufsize)
+		buf->ptr = buf->start;
+	else
+	{
+		if ((ssize_t)read_size <= -1)
+			return -1;
+		size_t diff_size = bufsize - read_size;
+		memmove(buf->start + diff_size, buf->start, read_size);
+		buf->ptr = buf->start + diff_size;
+	}
+	return *buf->ptr++;
 }
 
-size_t sp_recvn(subproc *sp, char *data, size_t n, bool from_stderr)
+ssize_t sp_recvn(subproc *sp, char *data, size_t n, bool from_stderr)
 {
 
 }
 
-size_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
+ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char delim, bool from_stderr)
 {
 
 }
 
-size_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
+ssize_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
 {
 	return sp_recvuntil(sp, data, size, '\n', from_stderr);
 }
