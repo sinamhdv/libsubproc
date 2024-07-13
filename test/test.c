@@ -170,7 +170,7 @@ void test_errors(void)
 
 void test_buffered_io(size_t bufsize)
 {
-	printf("\ntest_buffered_io(bufsize=%lu):\n");
+	printf("\ntest_buffered_io(bufsize=%lu):\n", bufsize);
 	puts("===========================");
 
 	subproc sp;
@@ -197,18 +197,28 @@ void test_buffered_io(size_t bufsize)
 	assert(ret == strlen(buf));
 	assert(strcmp(buf, "hello world!!!\n") == 0);
 
-	puts("hahaha");
 	assert(sp_sends(&sp, "__import__('sys').stdout.buffer.write(b'string\\0with\\0nulls\\n')\n") == 0);
 	ret = sp_recvuntil(&sp, buf, 5, "nulls", false);
-	log(ret);
-	fflush(stdout);
-	puts(buf);
 	assert(ret == 5);
 	buf[ret] = 0;
 	assert(strcmp(buf, ">>> s") == 0);
 	ret = sp_recvuntil(&sp, buf, 100, "nulls", false);
 	assert(ret > 0);
 	assert(memcmp(buf, "tring\0with\0nulls", ret) == 0);
+
+	assert(sp_recvuntil(&sp, buf, 100, ">>", false) > 0);
+	assert(sp_recvc(&sp, false) == '>');
+	assert(sp_recvc(&sp, false) == ' ');
+	assert(sp_sends(&sp, "print('123'") == 0);
+	assert(sp_flush(&sp) == 0);
+	assert(sp_sendc(&sp, ')') == 0);
+	assert(sp_flush(&sp) == 0);
+	assert(sp_sendc(&sp, '\n') == 0);
+	assert(sp_recvline(&sp, buf, 100, false) == 4);
+	buf[4] = 0;
+	assert(strcmp(buf, "123\n") == 0);
+
+	sp_free(&sp);
 }
 
 int main(void)
