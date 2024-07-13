@@ -217,8 +217,65 @@ ssize_t sp_recvline_s(subproc *sp, char *data, size_t size, bool from_stderr)
 
 int sp_interact(subproc *sp)
 {
+	if (sp_flush(sp) == -1) return -1;
 	struct pollfd poll_fds[3];
 	poll_fds[0].fd = 0;
 	poll_fds[0].events = POLL_IN;
-	if (sp->fds[0])
+	for (int i = 1; i <= 2; i++)
+	{
+		if (sp->buf[i].ptr != sp->buf[i].end)	// print all buffered output
+		{
+			if (!send_all_unbuffered(1, sp->buf[i].ptr, (size_t)sp->buf[i].end - (size_t)sp->buf[i].ptr))
+				return -1;
+			sp->buf[i].ptr = sp->buf[i].end;
+		}
+		if (sp->fds[i] != -1)
+		{
+			poll_fds[i].fd = sp->fds[i];
+			poll_fds[i].events = POLL_IN;
+		}
+		else
+			poll_fds[i].fd = -1;
+	}
+	while (true)
+	{
+		int result = poll(poll_fds, 3, -1);
+		if (result == -1)
+			seterror("poll", return -1);
+		for (int i = 0; i < 3; i++)
+		{
+			if (poll_fds[i].fd != -1 && poll_fds[i].revents != 0)
+			{
+				if (poll_fds[i].revents & POLL_IN)	// data available to read
+				{
+					char read_buf[1024];
+					ssize_t read_size = read(poll_fds[i].fd, read_buf, sizeof(read_buf));
+					if (read_size == -1) seterror("read", return -1);
+					if (poll_fds[i].fd == 0)	// read from user => send to subprocess
+					{
+						if (!send_all_unbuffered(sp->fds[0], read_buf, read_size))
+						{
+							puts("[!] Error: could not send entered data to subprocess");
+							fflush(stdout);
+						}
+					}
+					else	// read from subprocess => print for user
+					{
+						send_all_unbuffered(1, read_buf, read_size);
+					}
+				}
+				else	// POLL_ERR or POLL_HUP
+				{
+					// error reading data from user => continue printing subprocess output
+
+					if (poll_fds[i].fd != 0)	// error reading data from subprocess => let the user know
+					{
+						puts("[!] Stream closed");
+						fflush(stdout);
+						return 0;
+					}
+				}
+			}
+		}
+	}
 }

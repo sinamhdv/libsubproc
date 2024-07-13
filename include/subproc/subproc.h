@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <poll.h>
 
 #include "subproc/errors.h"
 #include "subproc/io.h"
