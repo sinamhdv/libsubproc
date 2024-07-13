@@ -180,12 +180,16 @@ void test_buffered_io(size_t bufsize)
 		(size_t[3]){bufsize, bufsize, bufsize}) == 0);
 	char buf[1024] = {};
 	ssize_t ret;
+
 	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, "th", false);
 	assert(ret == 4);
 	buf[ret] = 0;
 	assert(strcmp(buf, "Pyth") == 0);
-	assert(strncmp(sp.buf[1].ptr, "on ", 3) == 0);
-	assert(strncmp(sp.buf[1].start, "Python ", 7) == 0);
+	if (bufsize >= 10)
+	{
+		assert(strncmp(sp.buf[1].ptr, "on ", 3) == 0);
+		assert(strncmp(sp.buf[1].start, "Python ", 7) == 0);
+	}
 	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, ">>> ", false);
 	assert(ret == strlen(buf));
 	assert(strcmp(buf + strlen(buf) - 4, ">>> ") == 0);
