@@ -127,6 +127,7 @@ static ssize_t internal_buffered_recv_array(
 		{
 			memcpy(data + read_size, buf->ptr, size - read_size);
 			buf->ptr += size - read_size;
+			read_size = size;
 			return read_size;
 		}
 		memcpy(data + read_size, buf->ptr, buf_content_size);

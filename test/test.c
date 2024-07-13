@@ -168,17 +168,16 @@ void test_errors(void)
 	sp_perror("msg4");
 }
 
-void test_buffered_io(void)
+void test_buffered_io(size_t bufsize)
 {
-	puts("\ntest_buffered_io():");
+	printf("\ntest_buffered_io(bufsize=%lu):\n");
 	puts("===========================");
 
 	subproc sp;
 	char *argv[] = {"/usr/bin/env", "python3", NULL};
 	assert(sp_open(&sp, argv[0], argv, NULL,
 		(int[3]){SPIO_PTY, SPIO_PTY, SPIO_STDOUT},
-		(size_t[3]){20, 20, 20}) == 0);
-		// (size_t[3]){0, 0, 0}) == 0);
+		(size_t[3]){bufsize, bufsize, bufsize}) == 0);
 	char buf[1024] = {};
 	ssize_t ret;
 	ret = sp_recvuntil(&sp, buf, sizeof(buf) - 1, "th", false);
@@ -191,18 +190,25 @@ void test_buffered_io(void)
 	assert(ret == strlen(buf));
 	assert(strcmp(buf + strlen(buf) - 4, ">>> ") == 0);
 	
-	assert(sp_sends(&sp, "print('hello world')\n") == 0);
+	assert(sp_sends(&sp, "print('hello world!!!')\n") == 0);
 	ret = sp_recvline(&sp, buf, sizeof(buf) - 1, false);
 	assert(ret > 0);
 	buf[ret] = 0;
 	assert(ret == strlen(buf));
-	assert(strcmp(buf, "hello world\n") == 0);
+	assert(strcmp(buf, "hello world!!!\n") == 0);
 
-}
-
-void test_unbuffered_io(void)
-{
-	// TODO
+	puts("hahaha");
+	assert(sp_sends(&sp, "__import__('sys').stdout.buffer.write(b'string\\0with\\0nulls\\n')\n") == 0);
+	ret = sp_recvuntil(&sp, buf, 5, "nulls", false);
+	log(ret);
+	fflush(stdout);
+	puts(buf);
+	assert(ret == 5);
+	buf[ret] = 0;
+	assert(strcmp(buf, ">>> s") == 0);
+	ret = sp_recvuntil(&sp, buf, 100, "nulls", false);
+	assert(ret > 0);
+	assert(memcmp(buf, "tring\0with\0nulls", ret) == 0);
 }
 
 int main(void)
@@ -211,7 +217,8 @@ int main(void)
 	test_redirection();
 	test_spio_options();
 	test_errors();
-	test_buffered_io();
-	test_unbuffered_io();
+	test_buffered_io(20);
+	test_buffered_io(1);
+	test_buffered_io(0);
 	return 0;
 }
