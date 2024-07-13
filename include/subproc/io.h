@@ -28,10 +28,10 @@ int sp_sends(subproc *sp, char *str);
 int sp_flush(subproc *sp);
 int sp_recvc(subproc *sp, bool from_stderr);
 ssize_t sp_recvn(subproc *sp, char *buf, size_t size, bool from_stderr);
-ssize_t sp_recvuntil(subproc *sp, char *buf, size_t size, char delim, bool from_stderr);
+ssize_t sp_recvuntil(subproc *sp, char *buf, size_t size, char *delim, bool from_stderr);
 ssize_t sp_recvline(subproc *sp, char *buf, size_t size, bool from_stderr);
 ssize_t sp_recvn_s(subproc *sp, char *buf, size_t size, bool from_stderr);
-ssize_t sp_recvuntil_s(subproc *sp, char *buf, size_t size, char delim, bool from_stderr);
+ssize_t sp_recvuntil_s(subproc *sp, char *buf, size_t size, char *delim, bool from_stderr);
 ssize_t sp_recvline_s(subproc *sp, char *buf, size_t size, bool from_stderr);
 int sp_interact(subproc *sp);
 
