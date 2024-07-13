@@ -25,7 +25,7 @@ int sp_sendc(subproc *sp, char c)
 	if (buf->ptr == buf->end)	// flush if the buffer is full
 		if (sp_flush(sp) == -1)
 			return -1;
-	*(buf->start++) = c;
+	*(buf->ptr++) = c;
 	return 0;
 }
 
@@ -217,5 +217,8 @@ ssize_t sp_recvline_s(subproc *sp, char *data, size_t size, bool from_stderr)
 
 int sp_interact(subproc *sp)
 {
-
+	struct pollfd poll_fds[3];
+	poll_fds[0].fd = 0;
+	poll_fds[0].events = POLL_IN;
+	if (sp->fds[0])
 }
