@@ -225,6 +225,20 @@ void test_buffered_io(size_t bufsize)
 	sp_free(&sp);
 }
 
+void test_io_interact(void)
+{
+	puts("\ntest_io_interact():");
+	puts("===========================");
+	puts("\ninteractive python shell:\n");
+
+	subproc sp;
+	char *argv[] = {"/usr/bin/env", "python3", NULL};
+	assert(sp_open(&sp, argv[0], argv, NULL,
+		(int[3]){SPIO_PTY, SPIO_PTY, SPIO_STDOUT},
+		(size_t[3]){20, 20, 20}) == 0);
+	sp_interact(&sp);
+}
+
 int main(void)
 {
 	test_signals();
@@ -234,5 +248,6 @@ int main(void)
 	test_buffered_io(20);
 	test_buffered_io(1);
 	test_buffered_io(0);
+	test_io_interact();
 	return 0;
 }
