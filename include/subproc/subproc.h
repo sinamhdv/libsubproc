@@ -31,7 +31,7 @@ typedef struct subproc
 	struct sp_io_buffer buf[3];
 	int returncode;
 	pid_t pid;
-	bool _waited;	// XXX: this should not be changed by users
+	bool _waited;
 } subproc;
 
 /**
@@ -47,15 +47,46 @@ typedef struct subproc
  */
 int sp_open(subproc *sp, char *executable, char *argv[], char *envp[], int fd_values[3], size_t bufsize[3]);
 
+/**
+ * @brief send a signal to the subprocess
+ * 
+ * @param sp subprocess to send the signal to
+ * @param sig signal number
+ * @return 0 on success, -1 on error
+ */
 int sp_send_signal(subproc *sp, int sig);
 
+/**
+ * @brief send SIGKILL to subprocess sp
+ * 
+ * @param sp 
+ * @return 0 on success, -1 on error
+ */
 int sp_kill(subproc *sp);
 
 // TEMP DOC: returns 1 if terminated, -1 on error, 0 if child not terminated in non-blocking calls
+/**
+ * @brief wait on the subprocess child
+ * 
+ * @param sp 
+ * @param options flags for the waitpid syscall (e.g. WNOHANG for non-blocking wait)
+ * @return returns 1 and sets sp->return_code if terminated. Returns -1 on error and 0 for no status change in WNOHANG option
+ */
 int sp_wait(subproc *sp, int options);
 
+/**
+ * @brief close the stdin of the subprocess and free its buffer
+ * 
+ * @param sp 
+ * @return 0 on success, -1 on error
+ */
 int sp_close(subproc *sp);
 
+/**
+ * @brief free and clean up internal structures in a subproc struct
+ * 
+ * @param sp
+ */
 void sp_free(subproc *sp);
 
 #endif	// SP_HEADER_SUBPROC_H
