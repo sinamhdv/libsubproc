@@ -1,14 +1,18 @@
 # libsubproc
 
-A subprocess interaction and IO library in C for Linux.
+A library for C to spawn and interact with subprocesses on Linux
 
 The interface and idea of this library is similar to the python `subprocess` library, or the IO parts of the `pwntools` library.
 
 ## Features
 
-- TODO
 
-## Example Usage
+- Simple, easy-to-use, and documented interface
+- Error handling and library-specific `errno` and `perror()`
+- Custom IO buffering that can boost performance significantly and make things up to 80x faster. (see `examples/buffering_example.c` for a demo of the performance boost)
+- Support for different ways of handling subprocess standard file descriptors, including pseudo-terminals, Linux pipes, redirection, piping into another subprocess, duplicating from parent, etc.
+
+## Example
 
 For more examples of different features look at the `examples/` directory or the `test/test.c` file.
 
@@ -45,3 +49,9 @@ int main(void)
 	return 0;
 }
 ```
+
+## Usage
+
+- Run `make` in the project root to build the library.
+- Use the include path of `$LIBROOT/include` and library path of `$LIBROOT/bin` to compile and link your program with `libsubproc`.
+- Include `subproc/subproc.h` to get all of the necessary interface of the library.

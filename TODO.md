@@ -4,3 +4,4 @@
 - [ ] (maybe?) set `fd_assignment` for a custom fd to -1 to prevent closing it in `sp_free`
 - [ ] capturing return-code of programs terminating with signals (e.g. SIGSEGV) in `sp_wait`?
 - [ ] move `process.c`-relevant header material into `process.h` and include it in `subproc.h`
+- [ ] add `make install` command to install the library and headers
