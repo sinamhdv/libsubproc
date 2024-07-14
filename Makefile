@@ -6,7 +6,7 @@ BINDIR=bin
 OBJDIR=obj
 TESTDIR=test
 
-CFLAGS=-Wall -I$(INCLUDEDIR) -g -DDEBUG -fPIC
+CFLAGS=-Wall -I$(INCLUDEDIR) -fPIC
 
 SRCS=$(wildcard $(SRCDIR)/*.c)
 OBJS=$(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
@@ -17,6 +17,9 @@ DYNAMIC_BIN=$(BINDIR)/libsubproc.so
 $(shell mkdir -p $(BINDIR) $(OBJDIR))	# create build directories
 
 all: $(DYNAMIC_BIN)
+
+debug: CFLAGS += -g -DDEBUG
+debug: all
 
 $(DYNAMIC_BIN): $(OBJS)
 	$(CC) $(CFLAGS) -shared -o $@ $(OBJS)
