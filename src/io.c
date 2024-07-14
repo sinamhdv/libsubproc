@@ -29,19 +29,19 @@ int sp_sendc(subproc *sp, char c)
 	return 0;
 }
 
-int sp_sendn(subproc *sp, char *data, size_t n)
+int sp_sendn(subproc *sp, char *data, size_t size)
 {
 	struct sp_io_buffer *buf = &sp->buf[0];
 	size_t remaining_bufsize = (size_t)(buf->end) - (size_t)(buf->ptr);
-	if (buf->start == NULL || remaining_bufsize < n)	// direct write syscall
+	if (buf->start == NULL || remaining_bufsize < size)	// direct write syscall
 	{
 		if (buf->start != NULL)	// flush any remaining data in buf
 			if (sp_flush(sp) == -1)
 				return -1;
-		return send_all_unbuffered(sp->fds[0], data, n) ? 0 : -1;
+		return send_all_unbuffered(sp->fds[0], data, size) ? 0 : -1;
 	}
-	memcpy(buf->ptr, data, n);
-	buf->ptr += n;
+	memcpy(buf->ptr, data, size);
+	buf->ptr += size;
 	return 0;
 }
 
