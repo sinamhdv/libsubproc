@@ -3,7 +3,7 @@ INCLUDE_DIR=../include
 LIBRARY_PATH=../bin
 CFLAGS=-Wall -I$(INCLUDE_DIR) -L./$(LIBRARY_PATH) -lsubproc
 
-BINS=redirection_example interaction_example
+BINS=redirection_example interaction_example buffering_example
 
 all: $(BINS)
 
