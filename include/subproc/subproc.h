@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <poll.h>
+#include <assert.h>
 
 #include "subproc/errors.h"
 #include "subproc/io.h"
@@ -88,5 +89,12 @@ int sp_close(subproc *sp);
  * @param sp
  */
 void sp_free(subproc *sp);
+
+// internally used macros
+#ifdef DEBUG
+#define DBGCHECK(x) assert(x)
+#else
+#define DBGCHECK(x)
+#endif	// DEBUG
 
 #endif	// SP_HEADER_SUBPROC_H

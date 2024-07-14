@@ -93,8 +93,9 @@ int sp_recvc(subproc *sp, bool from_strerr)
 	if (buf->ptr != buf->end)	// already have data in buffer
 		return *buf->ptr++;
 	ssize_t result = refill_recv_buffer(buf, fd);
-	if (result == -1)
+	if (result == -1 || result == 0)
 		return -1;
+	DBGCHECK(buf->ptr != buf->end);
 	return *buf->ptr++;
 }
 
