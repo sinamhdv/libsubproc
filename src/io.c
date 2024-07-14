@@ -1,6 +1,6 @@
 #include "subproc/subproc.h"
 
-static bool send_all_unbuffered(int fd, char *data, size_t n)
+static bool send_all_unbuffered(int fd, void *data, size_t n)
 {
 	size_t sent = 0;
 	while (sent < n)
@@ -13,7 +13,7 @@ static bool send_all_unbuffered(int fd, char *data, size_t n)
 	return true;
 }
 
-int sp_sendc(subproc *sp, char c)
+int sp_sendc(subproc *sp, unsigned char c)
 {
 	struct sp_io_buffer *buf = &sp->buf[0];
 	if (buf->start == NULL)	// unbuffered
@@ -29,7 +29,7 @@ int sp_sendc(subproc *sp, char c)
 	return 0;
 }
 
-int sp_sendn(subproc *sp, char *data, size_t size)
+int sp_sendn(subproc *sp, void *data, size_t size)
 {
 	struct sp_io_buffer *buf = &sp->buf[0];
 	size_t remaining_bufsize = (size_t)(buf->end) - (size_t)(buf->ptr);
@@ -83,9 +83,9 @@ int sp_recvc(subproc *sp, bool from_strerr)
 	int fd = sp->fds[from_strerr ? 2 : 1];
 	if (sp_flush(sp) == -1)
 		return -1;
-	unsigned char c;
 	if (buf->start == NULL)	// unbuffered
 	{
+		unsigned char c;
 		if (read(fd, &c, 1) <= 0)
 			seterror("read", return -1);
 		return c;
@@ -102,7 +102,7 @@ int sp_recvc(subproc *sp, bool from_strerr)
 static ssize_t internal_buffered_recv_array(
 	struct sp_io_buffer *buf,
 	int fd,
-	char *data,
+	void *data,
 	size_t size)
 {
 	size_t read_size = 0;
@@ -128,7 +128,7 @@ static ssize_t internal_buffered_recv_array(
 	return read_size;
 }
 
-ssize_t sp_recvn(subproc *sp, char *data, size_t size, bool from_stderr)
+ssize_t sp_recvn(subproc *sp, void *data, size_t size, bool from_stderr)
 {
 	struct sp_io_buffer *buf = &sp->buf[from_stderr ? 2 : 1];
 	int fd = sp->fds[from_stderr ? 2 : 1];
@@ -143,23 +143,23 @@ ssize_t sp_recvn(subproc *sp, char *data, size_t size, bool from_stderr)
 	return internal_buffered_recv_array(buf, fd, data, size);
 }
 
-ssize_t sp_recvuntil(subproc *sp, char *data, size_t size, char *delim, bool from_stderr)
+ssize_t sp_recvuntil(subproc *sp, void *data, size_t size, char *delim, bool from_stderr)
 {
 	size_t delim_size = strlen(delim);
 	size_t read_size;
 	for (read_size = 0; read_size < size; read_size++)
 	{
-		if (read_size >= delim_size && strncmp(data + read_size - delim_size, delim, delim_size) == 0)
+		if (read_size >= delim_size && strncmp((char *)data + read_size - delim_size, delim, delim_size) == 0)
 			return read_size;
 		int read_char = sp_recvc(sp, from_stderr);
 		if (read_char == -1)
 			return read_size;
-		data[read_size] = read_char;
+		((unsigned char *)data)[read_size] = (unsigned char)read_char;
 	}
 	return read_size;
 }
 
-ssize_t sp_recvline(subproc *sp, char *data, size_t size, bool from_stderr)
+ssize_t sp_recvline(subproc *sp, void *data, size_t size, bool from_stderr)
 {
 	return sp_recvuntil(sp, data, size, "\n", from_stderr);
 }

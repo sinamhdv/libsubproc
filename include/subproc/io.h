@@ -15,9 +15,9 @@ sp_io_buffer for subprocess stdout/stderr:
 
 struct sp_io_buffer
 {
-	char *start;
-	char *ptr;
-	char *end;
+	unsigned char *start;
+	unsigned char *ptr;
+	unsigned char *end;
 };
 
 typedef struct subproc subproc;
@@ -29,7 +29,7 @@ typedef struct subproc subproc;
  * @param c the character to send
  * @return 0 on success, -1 on error
  */
-int sp_sendc(subproc *sp, char c);
+int sp_sendc(subproc *sp, unsigned char c);
 
 /**
  * @brief send an array of bytes to the subprocess
@@ -39,7 +39,7 @@ int sp_sendc(subproc *sp, char c);
  * @param size size of data in the data buffer
  * @return 0 on success, -1 on error
  */
-int sp_sendn(subproc *sp, char *data, size_t size);
+int sp_sendn(subproc *sp, void *data, size_t size);
 
 /**
  * @brief send a null-terminated string to the subprocess
@@ -76,7 +76,7 @@ int sp_recvc(subproc *sp, bool from_stderr);
  * @param from_stderr read from stderr instead of stdout
  * @return size of data received (0 on EOF), or -1 on error.
  */
-ssize_t sp_recvn(subproc *sp, char *buf, size_t size, bool from_stderr);
+ssize_t sp_recvn(subproc *sp, void *data, size_t size, bool from_stderr);
 
 /**
  * @brief receive data from the subprocess until a delimiter string
@@ -90,7 +90,7 @@ ssize_t sp_recvn(subproc *sp, char *buf, size_t size, bool from_stderr);
  * @param from_stderr read from stderr instead of stdout
  * @return size of data received (0 on EOF), or -1 on error.
  */
-ssize_t sp_recvuntil(subproc *sp, char *buf, size_t size, char *delim, bool from_stderr);
+ssize_t sp_recvuntil(subproc *sp, void *data, size_t size, char *delim, bool from_stderr);
 
 /**
  * @brief receive a line of data from the subprocess (until '\n')
@@ -103,7 +103,7 @@ ssize_t sp_recvuntil(subproc *sp, char *buf, size_t size, char *delim, bool from
  * @param from_stderr read from stderr instead of stdout
  * @return size of data received (0 on EOF), or -1 on error
  */
-ssize_t sp_recvline(subproc *sp, char *buf, size_t size, bool from_stderr);
+ssize_t sp_recvline(subproc *sp, void *data, size_t size, bool from_stderr);
 
 /**
  * @brief start an interactive prompt between the parent and subprocess
