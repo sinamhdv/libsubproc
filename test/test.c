@@ -225,6 +225,24 @@ void test_buffered_io(size_t bufsize)
 	sp_free(&sp);
 }
 
+void test_closed_io_interact(void)
+{
+	puts("\ntest_closed_io_interact():");
+	puts("===========================");
+
+	subproc sp;
+	char *argv[] = {"/usr/bin/env", "python3", NULL};
+	assert(sp_open(&sp, argv[0], argv, NULL,
+		(int[3]){SPIO_PTY, SPIO_PTY, SPIO_STDOUT},
+		(size_t[3]){200, 300, 400}) == 0);
+	assert(sp_sends(&sp, "exit(123)\n") == 0);
+	assert(sp_flush(&sp) == 0);
+	assert(sp_interact(&sp) == 0);
+	assert(sp_wait(&sp, 0) == 1);
+	assert(sp.returncode == 123);
+	sp_free(&sp);
+}
+
 void test_io_interact(void)
 {
 	puts("\ntest_io_interact():");
@@ -243,8 +261,9 @@ void test_io_interact(void)
 	printf("%s", recv_buf);
 	fflush(stdout);
 	assert(sp_sends(&sp, "print('abcd')\n") == 0);
-	
-	sp_interact(&sp);
+
+	assert(sp_interact(&sp) == 0);
+	sp_free(&sp);
 }
 
 int main(void)
@@ -253,9 +272,11 @@ int main(void)
 	test_redirection();
 	test_spio_options();
 	test_errors();
+	test_buffered_io(1024);
 	test_buffered_io(20);
 	test_buffered_io(1);
 	test_buffered_io(0);
+	test_closed_io_interact();
 	test_io_interact();
 	return 0;
 }

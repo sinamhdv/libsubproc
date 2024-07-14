@@ -70,7 +70,7 @@ int sp_kill(subproc *sp);
  * 
  * @param sp 
  * @param options flags for the waitpid syscall (e.g. WNOHANG for non-blocking wait)
- * @return returns 1 and sets sp->return_code if terminated. Returns -1 on error and 0 for no status change in WNOHANG option
+ * @return returns 1 and sets sp->returncode if terminated. Returns -1 on error and 0 for no status change in WNOHANG option
  */
 int sp_wait(subproc *sp, int options);
 
