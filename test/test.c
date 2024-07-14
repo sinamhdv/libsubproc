@@ -235,7 +235,15 @@ void test_io_interact(void)
 	char *argv[] = {"/usr/bin/env", "python3", NULL};
 	assert(sp_open(&sp, argv[0], argv, NULL,
 		(int[3]){SPIO_PTY, SPIO_PTY, SPIO_STDOUT},
-		(size_t[3]){20, 20, 20}) == 0);
+		(size_t[3]){200, 300, 400}) == 0);
+
+	// create some buffered data to ensure it's flushed correctly
+	char recv_buf[1024] = {};
+	assert(sp_recvuntil(&sp, recv_buf, sizeof(recv_buf), "Python", true) == 6);
+	printf("%s", recv_buf);
+	fflush(stdout);
+	assert(sp_sends(&sp, "print('abcd')\n") == 0);
+	
 	sp_interact(&sp);
 }
 
