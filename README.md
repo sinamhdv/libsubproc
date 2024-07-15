@@ -52,7 +52,7 @@ int main(void)
 ## Usage
 
 - Run `make` in the project root to build the library.
-- Edit the `INSTALL_PREFIX` value in `Makefile` to change the installation path (default: `/usr/local`).
+- Edit the `INSTALL_PREFIX` value in `Makefile` to change the installation path (default: `/usr`).
 - Run `make install` to install the library (possibly with `sudo` depending on the installation prefix).
 - Include `subproc/subproc.h` in your code to access the library's interface, and compile/link with `-lsubproc`
 
