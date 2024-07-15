@@ -6,7 +6,6 @@ The interface and idea of this library is similar to the python `subprocess` lib
 
 ## Features
 
-
 - Simple, easy-to-use, and documented interface
 - Error handling and library-specific `errno` and `perror()`
 - Custom IO buffering that can boost performance significantly and make things up to 80x faster. (see `examples/buffering_example.c` for a demo of the performance boost)
@@ -53,5 +52,13 @@ int main(void)
 ## Usage
 
 - Run `make` in the project root to build the library.
-- Use the include path of `$LIBROOT/include` and library path of `$LIBROOT/bin` to compile and link your program with `libsubproc`.
-- Include `subproc/subproc.h` to get all of the necessary interface of the library.
+- Edit the `INSTALL_PREFIX` value in `Makefile` to change the installation path (default: `/usr/local`).
+- Run `make install` to install the library (possibly with `sudo` depending on the installation prefix).
+- Include `subproc/subproc.h` in your code to access the library's interface, and compile/link with `-lsubproc`
+
+Alternatively, you can try installing the library in a container with the provided `Dockerfile`:
+
+```shell
+$ docker build -t libsubproc-image .
+$ docker run -it --rm libsubproc-image
+```
